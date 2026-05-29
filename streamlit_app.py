@@ -649,17 +649,106 @@ elif page == "Calculadora":
         - Mantenha consistência no tempo
         """)
 # =========================================================
-# RECOMENDAÇÕES
+# RECOMENDAÇÕES (BLOG)
 # =========================================================
 else:
 
-    st.title("💡 Recomendações Estratégicas")
+    st.title("📚 Conteúdos sobre Bem-estar e Saúde")
 
     st.markdown("""
-    ✅ Prática regular de atividade física  
-    ✅ Alimentação balanceada  
-    ✅ Redução de calorias  
-    ✅ Consumo adequado de água  
-
-    📊 A obesidade pode ser prevenida com mudanças no comportamento.
+    Explore conteúdos educativos sobre qualidade de vida, alimentação e hábitos saudáveis.
     """)
+
+    # =========================
+    # MENU DE CATEGORIAS
+    # =========================
+    categoria = st.selectbox(
+        "Escolha um tema:",
+        ["Alimentação", "Exercícios", "Hidratação", "Hábitos Saudáveis"]
+    )
+
+    st.divider()
+
+    # =========================================================
+    # 🥗 ALIMENTAÇÃO
+    # =========================================================
+    if categoria == "Alimentação":
+
+        st.subheader("🥗 Alimentação Saudável")
+
+        with st.expander("✅ Como melhorar sua alimentação"):
+            st.write("""
+            - Inclua vegetais diariamente  
+            - Evite alimentos ultraprocessados  
+            - Prefira alimentos naturais  
+
+            Uma alimentação equilibrada é um dos principais fatores na prevenção da obesidade.
+            """)
+
+        with st.expander("🚫 Evitar alimentos calóricos"):
+            st.write("""
+            - Reduza refrigerantes e doces  
+            - Evite fast food frequente  
+            - Controle porções  
+
+            O consumo frequente de alimentos calóricos está relacionado ao aumento do IMC.
+            """)
+
+    # =========================================================
+    # 🏃 EXERCÍCIOS
+    # =========================================================
+    elif categoria == "Exercícios":
+
+        st.subheader("🏃 Atividade Física")
+
+        with st.expander("✅ Benefícios da atividade física"):
+            st.write("""
+            - Redução de peso  
+            - Melhora da saúde cardiovascular  
+            - Aumento da qualidade de vida  
+            """)
+
+        with st.expander("📅 Quantidade recomendada"):
+            st.write("""
+            - 150 minutos por semana  
+            - Pode dividir em pequenas sessões diárias  
+            """)
+
+    # =========================================================
+    # 💧 HIDRATAÇÃO
+    # =========================================================
+    elif categoria == "Hidratação":
+
+        st.subheader("💧 Hidratação")
+
+        with st.expander("✅ Importância da água"):
+            st.write("""
+            - Regula o metabolismo  
+            - Auxilia na digestão  
+            - Ajuda no controle de peso  
+            """)
+
+        with st.expander("📊 Quanto devo beber?"):
+            st.write("""
+            - Cerca de 2 litros por dia  
+            - Pode variar por peso e atividade física  
+            """)
+
+    # =========================================================
+    # 🧠 HÁBITOS
+    # =========================================================
+    elif categoria == "Hábitos Saudáveis":
+
+        st.subheader("🧠 Hábitos de Vida")
+
+        with st.expander("✅ Sono de qualidade"):
+            st.write("""
+            - Dormir bem regula hormônios  
+            - Ajuda no controle de peso  
+            """)
+
+        with st.expander("📉 Reduzir sedentarismo"):
+            st.write("""
+            - Evite ficar longos períodos sentado  
+            - Movimente-se ao longo do dia  
+            """)
