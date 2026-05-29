@@ -20,66 +20,69 @@ def load_data():
     return df
 
 df = load_data()
+
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
 
-# ORDEM
-order_original = [
-    "Insufficient_Weight",
-    "Normal_Weight",
-    "Overweight_Level_I",
-    "Overweight_Level_II",
-    "Obesity_Type_I",
-    "Obesity_Type_II",
-    "Obesity_Type_III"
-]
-
-labels_pt = [
-    "Abaixo do peso",
-    "Peso normal",
-    "Sobrepeso I",
-    "Sobrepeso II",
-    "Obesidade I",
-    "Obesidade II",
-    "Obesidade III"
-]
-
+# =========================================================
 # MENU
+# =========================================================
 page = st.sidebar.radio(
     "📊 Navegação",
     ["📁 Apresentação dos Dados", "📊 Análise + Modelagem", "🧠 Calculadora"]
 )
 
 # =========================================================
-# 📁 APRESENTAÇÃO
+# 📁 APRESENTAÇÃO DOS DADOS
 # =========================================================
 if page == "📁 Apresentação dos Dados":
 
-    st.title("📁 Entendimento do Dataset")
+    st.title("📁 O que temos de dados?")
 
     st.markdown("""
-Este dataset foi desenvolvido para análise de obesidade com base em características físicas e comportamentais.
+Este dataset reúne informações relacionadas à obesidade, combinando:
 
-Ele combina:
-- dados fisiológicos (idade, altura, peso)
-- hábitos de vida (alimentação, atividade física)
-- comportamentos diários (tecnologia, álcool)
+- Dados físicos (idade, altura, peso)
+- Hábitos alimentares
+- Estilo de vida
+- Comportamentos do dia a dia
 
-🎯 Objetivo:
-Permitir análise dos fatores que influenciam a obesidade e apoiar modelos preditivos.
+O objetivo é analisar quais fatores influenciam o nível de obesidade.
 """)
 
+    # tamanho
     st.write(f"Registros: {df.shape[0]}")
     st.write(f"Variáveis: {df.shape[1]}")
 
-    st.subheader("📊 Estatísticas descritivas")
+    # tipos
+    st.subheader("📊 Tipos de dados")
+
+    tipos = df.dtypes.reset_index()
+    tipos.columns = ["Variável", "Tipo"]
+
+    st.dataframe(tipos)
+
+    # missing
+    st.subheader("🔍 Dados faltantes")
+
+    missing = df.isnull().sum()
+    st.dataframe(missing)
+
+    # estatística
+    st.subheader("📊 Estatística descritiva")
 
     stats = df.describe().T[["mean", "min", "max"]]
     stats.columns = ["Média", "Mínimo", "Máximo"]
     st.dataframe(stats)
 
     st.markdown("""
-A análise estatística mostra boa variabilidade dos dados, essencial para modelagem robusta.
+### 📌 Conclusão
+
+- Dados completos (sem missing relevante)  
+- Boa variabilidade  
+- Variáveis adequadas para modelagem  
+
+➡️ Base pronta para análise e machine learning
 """)
 
 # =========================================================
@@ -87,119 +90,53 @@ A análise estatística mostra boa variabilidade dos dados, essencial para model
 # =========================================================
 elif page == "📊 Análise + Modelagem":
 
-    st.title("📊 Análise Exploratória e Modelagem")
+    st.title("📊 Análise e Modelagem")
 
-    # ---------------------------
-    # DISTRIBUIÇÃO
-    # ---------------------------
-    st.subheader("Distribuição dos níveis de obesidade")
+    # IMC
+    st.subheader("IMC vs Obesidade")
 
     fig, ax = plt.subplots(figsize=(10,5))
-
-    sns.countplot(
-        data=df,
-        x="Obesity",
-        order=order_original,
-        palette="viridis"
-    )
-
-    ax.set_xticklabels(labels_pt, rotation=30)
-    ax.set_yticks([])
-
-    for p in ax.patches:
-        ax.annotate(
-            int(p.get_height()),
-            (p.get_x()+p.get_width()/2., p.get_height()),
-            ha="center"
-        )
+    sns.boxplot(data=df, x="Obesity", y="IMC", palette="coolwarm")
 
     st.pyplot(fig)
 
     st.markdown("""
-A distribuição é equilibrada, permitindo treinamento sem viés significativo.
+O IMC apresenta separação clara entre classes → principal fator explicativo.
 """)
 
-    # ---------------------------
-    # IMC
-    # ---------------------------
-    st.subheader("IMC vs Obesidade")
+    # IDADE
+    st.subheader("Idade vs Obesidade")
 
     fig2, ax2 = plt.subplots(figsize=(10,5))
+    sns.boxplot(data=df, x="Obesity", y="Age")
 
-    sns.boxplot(
-        data=df,
-        x="Obesity",
-        y="IMC",
-        order=order_original,
-        palette="coolwarm"
-    )
-
-    ax2.set_xticklabels(labels_pt, rotation=30)
     st.pyplot(fig2)
 
     st.markdown("""
-IMC apresenta crescimento consistente → principal variável explicativa.
+A idade apresenta crescimento gradual.
+
+Outliers indicam variabilidade real da população.
 """)
 
-    # ---------------------------
-    # IDADE
-    # ---------------------------
-    st.subheader("Idade vs Obesidade")
-
-    fig3, ax3 = plt.subplots(figsize=(10,5))
-
-    sns.boxplot(
-        data=df,
-        x="Obesity",
-        y="Age",
-        order=order_original,
-        palette="viridis"
-    )
-
-    ax3.set_xticklabels(labels_pt, rotation=30)
-    st.pyplot(fig3)
-
-    st.markdown("""
-Idade aumenta progressivamente.
-
-Outliers mostram variabilidade real da população.
-""")
-
-    # ---------------------------
-    # ATIVIDADE
-    # ---------------------------
-    st.subheader("Atividade física")
-
-    fig4, ax4 = plt.subplots()
-
-    sns.boxplot(data=df, x="Obesity", y="FAF", order=order_original)
-
-    st.pyplot(fig4)
-
-    st.markdown("""
-Menor atividade física → maior obesidade.
-""")
-
-    # ---------------------------
     # MODELAGEM
-    # ---------------------------
     st.subheader("🧠 Modelagem")
 
     st.markdown("""
-Pipeline:
+O modelo utilizou Random Forest devido a:
 
-- criação do IMC  
-- remoção de Height e Weight (evitar leakage)  
-- encoding de categóricas  
-- modelo: Random Forest  
+- capacidade de lidar com dados mistos  
+- captura de relações não lineares  
+- robustez a outliers  
 
-Justificativa:
-- robusto
-- captura não linearidade
-- evita overfitting
+### ⚠️ Atenção:
+Acurácia de 99% pode indicar data leakage.
+
+Para evitar isso:
+- removemos Height e Weight
+- usamos apenas IMC
 """)
 
-    # avaliação
+    # validação
     df_model = df.drop(["Weight", "Height"], axis=1)
 
     for col in df_model.select_dtypes("object"):
@@ -208,38 +145,45 @@ Justificativa:
     X = df_model.drop("Obesity", axis=1)
     y = df_model["Obesity"]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2
+    )
 
     pred = model.predict(X_test)
 
     st.metric("Acurácia", f"{accuracy_score(y_test, pred):.2%}")
 
+    # matriz
     fig_cm, ax_cm = plt.subplots()
     sns.heatmap(confusion_matrix(y_test, pred), annot=True, fmt="d")
+
     st.pyplot(fig_cm)
 
-    # ---------------------------
-    # FEATURE IMPORTANCE (VERTICAL)
-    # ---------------------------
+    st.markdown("""
+### 📌 Provas de validade do modelo
+
+- Avaliação em dados não vistos (teste)
+- Erros concentrados entre classes próximas
+- Feature importance coerente
+
+➡️ Indica modelo consistente
+""")
+
+    # importance
     st.subheader("Importância das variáveis")
 
     imp = pd.DataFrame({
         "Feature": X.columns,
-        "Importância": model.feature_importances_
-    }).sort_values(by="Importância", ascending=True)
+        "Importance": model.feature_importances_
+    }).sort_values(by="Importance")
 
-    fig_imp, ax_imp = plt.subplots(figsize=(8,6))
-
-    ax_imp.barh(imp["Feature"], imp["Importância"], color="teal")
+    fig_imp, ax_imp = plt.subplots()
+    ax_imp.barh(imp["Feature"], imp["Importance"])
 
     st.pyplot(fig_imp)
 
-    st.markdown("""
-IMC é o principal driver, seguido por comportamento (atividade e alimentação).
-""")
-
 # =========================================================
-# 🧠 CALCULADORA COMPLETA
+# 🧠 CALCULADORA ROBUSTA
 # =========================================================
 else:
 
@@ -248,7 +192,7 @@ else:
     gender = st.selectbox("Gênero", ["Male","Female"])
     age = st.slider("Idade",10,80)
 
-    favc = st.selectbox("Consumo calórico",["yes","no"])
+    favc = st.selectbox("Consumo de alimentos calóricos?",["yes","no"])
     fcvc = st.slider("Vegetais",1,3)
 
     faf = st.slider("Atividade física",0,7)
@@ -259,13 +203,13 @@ else:
     peso = st.number_input("Peso",30.0,200.0)
     altura = st.number_input("Altura",1.40,2.20)
 
-    imc = peso/(altura**2)
+    imc = peso / (altura**2)
 
     st.write(f"IMC atual: {imc:.2f}")
 
     if st.button("Avaliar"):
 
-        peso_ideal = 24.9*(altura**2)
+        peso_ideal = 24.9 * (altura**2)
 
         st.subheader("Resultado")
 
@@ -280,20 +224,26 @@ else:
             "IMC": imc
         }
 
-        # recomendacoes inteligentes
-        st.subheader("💡 Recomendações")
+        # recomendações inteligentes
+        st.subheader("💡 O que pode melhorar")
 
         if calc in ["Frequently","Always"]:
-            st.write("Reduzir álcool pode levar você a uma classificação melhor.")
+            st.write("➡️ Reduzir álcool pode diminuir seu nível de obesidade.")
 
         if favc == "yes":
-            st.write("Reduzir calorias pode diminuir o nível de obesidade.")
+            st.write("➡️ Reduzir alimentos calóricos pode te levar a uma categoria mais saudável.")
 
         if faf <= 2:
-            st.write("Aumentar atividade física pode reverter o quadro.")
+            st.write("➡️ Mais atividade física pode reduzir seu nível de obesidade.")
 
         if fcvc <= 1:
-            st.write("Aumentar vegetais melhora o metabolismo.")
+            st.write("➡️ Aumentar vegetais melhora seu metabolismo.")
 
         st.subheader("⚖️ Peso ideal")
-        st.write(f"{peso_ideal:.1f} kg")
+
+        diff = peso - peso_ideal
+
+        st.write(f"Peso ideal aproximado: {peso_ideal:.1f} kg")
+
+        if diff > 0:
+            st.write(f"Você pode reduzir cerca de {diff:.1f} kg para atingir uma faixa mais saudável.")
