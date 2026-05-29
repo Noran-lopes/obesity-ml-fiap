@@ -129,14 +129,14 @@ if page == "Exploração":
 
 
 # =========================================================
-# ANÁLISE + MODELAGEM
+# ANÁLISE + MODELAGEM COMPLETA
 # =========================================================
 elif page == "Análise + Modelagem":
 
     st.title("📊 Análise + Modelagem")
 
     # =========================================================
-    # 🔥 ORDEM CORRETA DAS CLASSES
+    # ORDEM DAS CLASSES
     # =========================================================
     ordem = [
         "Insufficient_Weight",
@@ -158,141 +158,176 @@ elif page == "Análise + Modelagem":
         "Obesidade III"
     ]
 
-    mapa_labels = dict(zip(ordem, labels_pt))
+    df_plot = df.copy()
 
-    if "Obesity_level" in df.columns:
-
-        df_plot = df.copy()
-
-        # garantir ordem correta
+    if "Obesity_level" in df_plot.columns:
         df_plot["Obesity_level"] = pd.Categorical(
             df_plot["Obesity_level"],
             categories=ordem,
             ordered=True
         )
 
-        # =========================================================
-        # 📊 ANÁLISE DESCRITIVA
-        # =========================================================
-        st.subheader("1️⃣ Distribuição de IMC por Nível de Obesidade")
+    # =========================================================
+    # 1️⃣ ANÁLISE DESCRITIVA
+    # =========================================================
+    st.subheader("1️⃣ Análise Descritiva")
 
-        fig, ax = plt.subplots()
-        sns.boxplot(
-            data=df_plot,
-            x="Obesity_level",
-            y="IMC",
-            order=ordem,
-            ax=ax
-        )
+    fig, ax = plt.subplots()
+    sns.boxplot(data=df_plot, x="Obesity_level", y="IMC", order=ordem, ax=ax)
 
-        ax.set_title("Distribuição do IMC por Classe de Obesidade")
-        ax.set_xlabel("Classificação de Obesidade")
-        ax.set_ylabel("IMC")
+    ax.set_xticklabels(labels_pt, rotation=45)
+    ax.set_ylabel("IMC")
 
-        ax.set_xticklabels(labels_pt, rotation=45)
+    st.pyplot(fig)
 
-        st.pyplot(fig)
+    st.markdown("""
+    ### 🧠 Interpretação
 
-        st.markdown("""
-        ✅ **Interpretação:**
-        - Observa-se crescimento consistente do IMC entre as classes  
-        - Há separação clara entre níveis normais e obesidade  
-        - Classes intermediárias apresentam maior sobreposição  
+    O IMC apresenta crescimento progressivo entre os níveis de obesidade.
 
-        🎯 **Conclusão:**
-        O IMC é o principal indicador para classificação de obesidade.
-        """)
+    🔎 **Insights:**
+    - Há separação clara entre classes  
+    - IMC aumenta conforme o nível de obesidade  
+    - Classes intermediárias possuem leve sobreposição  
 
-        st.divider()
+    🎯 **Conclusão:**
+    O IMC é o principal indicador para classificação da obesidade.
+    """)
 
-        # =========================================================
-        # 🔍 ANÁLISE DIAGNÓSTICA
-        # =========================================================
-        st.subheader("2️⃣ Relação entre Idade e IMC")
+    st.divider()
 
-        fig, ax = plt.subplots()
+    # =========================================================
+    # 2️⃣ ANÁLISE DIAGNÓSTICA
+    # =========================================================
+    st.subheader("2️⃣ Análise Diagnóstica")
 
-        sns.scatterplot(
-            data=df_plot,
-            x="Age",
-            y="IMC",
-            hue="Obesity_level",
-            hue_order=ordem,
-            ax=ax
-        )
+    fig, ax = plt.subplots()
+    sns.scatterplot(data=df_plot, x="Age", y="IMC", hue="Obesity_level", ax=ax)
 
-        ax.set_title("Relação entre Idade e IMC por Classe")
-        ax.set_xlabel("Idade")
-        ax.set_ylabel("IMC")
+    st.pyplot(fig)
 
-        st.pyplot(fig)
+    st.markdown("""
+    ### 🧠 Interpretação
 
-        st.markdown("""
-        ✅ **Insight:**
-        - A idade apresenta leve tendência de aumento do IMC  
-        - Entretanto, não explica sozinha a obesidade  
+    A relação entre idade e IMC não é determinística.
 
-        🎯 **Conclusão:**
-        A obesidade é multifatorial e depende mais de hábitos do que idade isoladamente.
-        """)
+    🔎 **Insights:**
+    - Existe leve tendência de aumento com a idade  
+    - Há indivíduos com alto IMC em diversas idades  
 
-        st.divider()
+    🎯 **Conclusão:**
+    A obesidade é multifatorial e não depende apenas da idade.
+    """)
 
-        # =========================================================
-        # 🤖 ANÁLISE PREDITIVA
-        # =========================================================
-        st.subheader("3️⃣ Modelagem Preditiva")
+    st.divider()
 
-        st.markdown("""
-        O modelo foi desenvolvido utilizando Random Forest.
+    # =========================================================
+    # 3️⃣ MODELAGEM PREDITIVA
+    # =========================================================
+    st.subheader("3️⃣ Modelagem Preditiva")
 
-        ✅ **Motivos da escolha:**
-        - Captura relações não lineares  
-        - Robusto a outliers  
-        - Reduz overfitting  
+    st.markdown("""
+    O modelo foi desenvolvido utilizando o algoritmo Random Forest.
 
-        ✅ **Pipeline aplicada:**
-        - Criação do IMC  
-        - Remoção de Height e Weight (evita leakage)  
-        - Encoding de variáveis categóricas  
-        - Split treino/teste (80/20)  
+    ✅ **Motivos da escolha:**
+    - Modela relações não lineares  
+    - Robusto a outliers  
+    - Reduz overfitting  
 
-        ✅ **Performance:**
-        - Acurácia aproximada de 97%  
+    ✅ **Pipeline:**
+    - Criação do IMC  
+    - Encoding das variáveis categóricas  
+    - Divisão treino/teste  
 
-        🎯 **Interpretação:**
-        O modelo apresenta alta capacidade de generalização.
-        """)
+    🎯 **Objetivo:**
+    Prever corretamente o nível de obesidade.
+    """)
 
-        st.divider()
+    # =========================================================
+    # VALIDAÇÃO DO MODELO
+    # =========================================================
+    from sklearn.metrics import confusion_matrix, accuracy_score
 
-        # =========================================================
-        # 💡 ANÁLISE PRESCRITIVA
-        # =========================================================
-        st.subheader("4️⃣ Análise Prescritiva")
+    y_pred = model.predict(X_test)
 
-        st.markdown("""
-        ### 🔍 Fatores principais identificados:
+    acc = accuracy_score(y_test, y_pred)
 
-        - IMC elevado  
-        - Baixa atividade física (FAF)  
-        - Baixo consumo de vegetais (FCVC)  
-        - Consumo frequente de alimentos calóricos (FAVC)  
+    st.metric("✅ Acurácia do Modelo", f"{round(acc*100,2)}%")
 
-        ### ✅ Recomendações:
+    # =========================================================
+    # MATRIZ DE CONFUSÃO
+    # =========================================================
+    st.subheader("📊 Matriz de Confusão")
 
-        - Aumentar frequência de atividade física  
-        - Melhorar qualidade alimentar  
-        - Reduzir alimentos altamente calóricos  
-        - Aumentar consumo de água  
+    cm = confusion_matrix(y_test, y_pred)
 
-        🎯 **Conclusão final:**
+    fig, ax = plt.subplots()
 
-        A obesidade pode ser significativamente reduzida através de mudanças comportamentais mensuráveis, sendo possível atuar preventivamente com base nos dados.
-        """)
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        ax=ax
+    )
 
-    else:
-        st.error(f"Coluna não encontrada: {df.columns}")
+    ax.set_xlabel("Previsto")
+    ax.set_ylabel("Real")
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    A matriz de confusão demonstra a qualidade das previsões do modelo.
+
+    🔎 **Insights:**
+    - A maioria das previsões está correta (valores na diagonal)  
+    - Os erros acontecem entre classes vizinhas  
+    - Classes extremas apresentam alto acerto  
+
+    🎯 **Conclusão:**
+    O modelo possui excelente desempenho e é confiável para classificação.
+    """)
+
+    st.divider()
+
+    # =========================================================
+    # FEATURE IMPORTANCE
+    # =========================================================
+    st.subheader("📈 Importância das Variáveis")
+
+    importances = pd.DataFrame({
+        "Variável": X_test.columns,
+        "Importância": model.feature_importances_
+    }).sort_values(by="Importância", ascending=False)
+
+    fig, ax = plt.subplots()
+
+    sns.barplot(
+        data=importances.head(10),
+        x="Importância",
+        y="Variável",
+        ax=ax
+    )
+
+    ax.set_title("Top Variáveis Mais Importantes")
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    O gráfico mostra quais variáveis mais influenciam a decisão do modelo.
+
+    🔎 **Insights:**
+    - IMC é o principal fator  
+    - Variáveis comportamentais são relevantes  
+    - O modelo considera múltiplas dimensões  
+
+    🎯 **Conclusão:**
+    A obesidade é explicada por fatores físicos e comportamentais em conjunto.
+    """)
 # =========================================================
 # DASHBOARD EXECUTIVO FINAL
 # =========================================================
