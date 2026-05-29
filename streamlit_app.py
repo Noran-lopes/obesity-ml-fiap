@@ -127,34 +127,123 @@ if page == "Exploração":
     Essa base é adequada para construção de modelos que vão além da previsão, permitindo recomendações práticas de melhoria.
     """)
 
+
 # =========================================================
-# ANÁLISE
+# ANÁLISE + MODELAGEM
 # =========================================================
 elif page == "Análise + Modelagem":
 
-    st.title("📊 Análise Prescritiva")
+    st.title("📊 Análise + Modelagem")
+
+    # =========================================================
+    # 📊 1. ANÁLISE DESCRITIVA
+    # =========================================================
+    st.subheader("1️⃣ Análise Descritiva")
+
+    st.markdown("""
+    A análise descritiva tem como objetivo entender a distribuição dos dados e identificar padrões iniciais.
+    """)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.write("Distribuição da Idade")
+        fig, ax = plt.subplots()
+        df["Age"].hist(bins=20, ax=ax)
+        st.pyplot(fig)
+
+    with col2:
+        st.write("Distribuição do IMC")
+        fig, ax = plt.subplots()
+        df["IMC"].hist(bins=20, ax=ax)
+        st.pyplot(fig)
+
+    st.markdown("""
+    ✅ Observação:
+    - Existe concentração de indivíduos em faixas específicas de idade  
+    - O IMC apresenta variação significativa entre indivíduos  
+    """)
+
+    st.divider()
+
+    # =========================================================
+    # 🔍 2. ANÁLISE DIAGNÓSTICA
+    # =========================================================
+    st.subheader("2️⃣ Análise Diagnóstica")
+
+    st.markdown("""
+    A análise diagnóstica busca entender as causas e relações entre variáveis.
+    """)
 
     if "Obesity_level" in df.columns:
 
         fig, ax = plt.subplots()
-        sns.scatterplot(data=df, x="Age", y="IMC", hue="Obesity_level", ax=ax)
+        sns.boxplot(data=df, x="Obesity_level", y="IMC", ax=ax)
+        plt.xticks(rotation=45)
         st.pyplot(fig)
 
         st.markdown("""
-        ✅ IMC é o principal fator  
-        ✅ Estilo de vida impacta diretamente  
-        ✅ Mudança comportamental reduz risco  
+        ✅ Insight:
+        - O IMC aumenta conforme o nível de obesidade  
+        - Existe clara separação entre as classes  
+
+        🎯 Interpretação:
+        O IMC é um forte indicador da condição de obesidade.
         """)
 
-    else:
-        st.error(f"Erro: coluna não encontrada → {df.columns}")
+    st.divider()
 
-    st.subheader("🤖 Modelagem")
+    # =========================================================
+    # 🤖 3. ANÁLISE PREDITIVA
+    # =========================================================
+    st.subheader("3️⃣ Análise Preditiva")
+
     st.markdown("""
-    - Modelo: Random Forest  
-    - Feature Engineering: IMC  
-    - Encoding: LabelEncoder  
-    - Acurácia: ~97%  
+    A análise preditiva utiliza modelos de Machine Learning para prever o nível de obesidade com base nas variáveis disponíveis.
+    """)
+
+    st.markdown("""
+    ✅ Modelo utilizado: Random Forest  
+
+    ✅ Principais características:
+    - Captura relações não lineares  
+    - Lida bem com múltiplas variáveis  
+    - Reduz overfitting  
+
+    ✅ Performance:
+    - Acurácia aproximada: ~97%  
+
+    🎯 Interpretação:
+    O modelo apresenta alta capacidade de prever corretamente os níveis de obesidade.
+    """)
+
+    st.divider()
+
+    # =========================================================
+    # 💡 4. ANÁLISE PRESCRITIVA
+    # =========================================================
+    st.subheader("4️⃣ Análise Prescritiva")
+
+    st.markdown("""
+    A análise prescritiva utiliza os insights dos dados para sugerir ações concretas.
+    """)
+
+    st.markdown("""
+    ### 🔍 Principais fatores identificados:
+    - IMC elevado  
+    - Baixa atividade física  
+    - Baixo consumo de vegetais  
+    - Alto consumo calórico  
+
+    ### ✅ Recomendações práticas:
+
+    - Aumentar a frequência de atividade física  
+    - Melhorar a qualidade da alimentação  
+    - Reduzir ingestão de alimentos calóricos  
+    - Aumentar consumo de água  
+
+    🎯 Conclusão:
+    A obesidade pode ser prevenida através de mudanças comportamentais mensuráveis.
     """)
 
 # =========================================================
