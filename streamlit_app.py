@@ -103,7 +103,6 @@ if page == "Exploração":
 
     Essas variáveis permitem analisar tanto características biológicas quanto hábitos de vida.
     """)
-
 # =========================
 # 📋 VISUALIZAÇÃO DOS DADOS
 # =========================
