@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import pickle
 import numpy as np
+import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -34,66 +34,76 @@ def load_data():
 
 df = load_data()
 
-# =========================
-# LOAD MODEL
-# =========================
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
+
+# =========================
+# ORDEM CORRETA (REQUISITO)
+# =========================
+order_original = [
+    "Insufficient_Weight",
+    "Normal_Weight",
+    "Overweight_Level_I",
+    "Overweight_Level_II",
+    "Obesity_Type_I",
+    "Obesity_Type_II",
+    "Obesity_Type_III"
+]
+
+labels_pt = [
+    "Abaixo do peso",
+    "Peso normal",
+    "Sobrepeso I",
+    "Sobrepeso II",
+    "Obesidade I",
+    "Obesidade II",
+    "Obesidade III"
+]
 
 # =========================================================
 # 📁 APRESENTAÇÃO DOS DADOS
 # =========================================================
 if page == "📁 Apresentação dos Dados":
 
-    st.title("📁 Apresentação do Dataset")
+    st.title("📁 Entendimento do Dataset")
 
-    st.subheader("📊 Visão geral")
-    st.write(f"🔢 Registros: {df.shape[0]}")
+    st.write(f"📊 Registros: {df.shape[0]}")
     st.write(f"📊 Variáveis: {df.shape[1]}")
 
-    st.dataframe(df.head())
+    tipos = df.dtypes.reset_index()
+    tipos.columns = ["Variável", "Tipo técnico"]
 
-    # ✅ Dicionário de Dados
-    st.subheader("📌 Dicionário de Variáveis")
+    descricao = {
+        "Gender": "Sexo do indivíduo",
+        "Age": "Idade (anos)",
+        "Height": "Altura (m)",
+        "Weight": "Peso (kg)",
+        "family_history": "Histórico familiar",
+        "FAVC": "Consumo calórico",
+        "FCVC": "Consumo de vegetais",
+        "NCP": "Refeições por dia",
+        "CAEC": "Lanches",
+        "SMOKE": "Fumante",
+        "CH2O": "Consumo de água",
+        "SCC": "Controle de calorias",
+        "FAF": "Atividade física",
+        "TUE": "Tempo de tecnologia",
+        "CALC": "Álcool",
+        "MTRANS": "Transporte",
+        "Obesity": "Nível de obesidade"
+    }
 
-    data_dict = pd.DataFrame({
-        "Variável (EN)": [
-            "Gender","Age","Height","Weight","family_history",
-            "FAVC","FCVC","NCP","CAEC","SMOKE","CH2O",
-            "SCC","FAF","TUE","CALC","MTRANS","Obesity"
-        ],
-        "Variável (PT)": [
-            "Gênero","Idade","Altura","Peso","Histórico familiar",
-            "Consumo calórico","Consumo de vegetais","Refeições",
-            "Lanches","Fumante","Água","Controle calórico",
-            "Atividade física","Tecnologia","Álcool","Transporte","Obesidade"
-        ],
-        "Tipo": [
-            "Qualitativo","Quantitativo","Quantitativo","Quantitativo",
-            "Qualitativo","Qualitativo","Quantitativo","Quantitativo",
-            "Qualitativo","Qualitativo","Quantitativo","Qualitativo",
-            "Quantitativo","Quantitativo","Qualitativo","Qualitativo","Target"
-        ],
-        "Descrição": [
-            "Sexo do indivíduo","Idade em anos","Altura em metros","Peso em kg",
-            "Histórico familiar de obesidade","Consumo de comida calórica",
-            "Consumo de vegetais","Refeições por dia","Frequência de lanches",
-            "Indica se fuma","Consumo de água (litros)","Controle de calorias",
-            "Dias de atividade física","Horas de tecnologia",
-            "Consumo de álcool","Tipo de transporte","Nível de obesidade"
-        ]
-    })
+    tipos["Descrição"] = tipos["Variável"].map(descricao)
 
-    st.dataframe(data_dict, use_container_width=True)
+    st.dataframe(tipos, use_container_width=True)
 
-    st.subheader("🧠 Interpretação")
-    st.markdown("""
+    st.info("""
 O dataset combina:
 
-- **Dados físicos (IMC, idade)**  
-- **Dados comportamentais (alimentação, atividade)**  
+🔹 Dados físicos (IMC, idade)  
+🔹 Dados comportamentais (atividade, alimentação)
 
-➡️ Permite modelar obesidade de forma completa.
+➡️ Permite modelagem completa do risco de obesidade
 """)
 
 # =========================================================
@@ -101,19 +111,22 @@ O dataset combina:
 # =========================================================
 elif page == "📊 Análise dos Dados":
 
-    st.title("📊 Análise Estratégica da Obesidade")
+    st.title("📊 Análise Exploratória + Pipeline Analítico")
 
-    labels_pt = [
-        "Peso normal","Sobrepeso I","Sobrepeso II",
-        "Obesidade I","Abaixo do peso","Obesidade II","Obesidade III"
-    ]
-
-    # ✅ DISTRIBUIÇÃO
+    # =========================
+    # 1. DISTRIBUIÇÃO
+    # =========================
     st.subheader("📊 Distribuição dos níveis de obesidade")
 
     fig, ax = plt.subplots(figsize=(10,5))
 
-    sns.countplot(x="Obesity", data=df, palette="viridis", ax=ax)
+    sns.countplot(
+        data=df,
+        x="Obesity",
+        order=order_original,
+        palette="viridis",
+        ax=ax
+    )
 
     ax.set_xticklabels(labels_pt, rotation=30)
     ax.set_ylabel("")
@@ -121,62 +134,136 @@ elif page == "📊 Análise dos Dados":
 
     for p in ax.patches:
         ax.annotate(
-            f'{int(p.get_height())}',
-            (p.get_x()+p.get_width()/2., p.get_height()),
-            ha='center'
+            f"{int(p.get_height())}",
+            (p.get_x() + p.get_width()/2., p.get_height()),
+            ha="center"
         )
 
     st.pyplot(fig)
 
-    st.info("Distribuição equilibrada → modelo robusto.")
+    st.markdown("""
+### 📌 Análise do gráfico:
 
-    # ✅ IMC
-    st.subheader("⚖️ IMC vs Obesidade")
+A distribuição dos dados mostra que todas as classes de obesidade possuem volume relevante de observações.
+
+➡️ Destaque para:
+- **Obesidade Tipo I (~351 casos)** como maior grupo
+- **Abaixo do peso (~272 casos)** como menor grupo
+
+### 🎯 Conclusão:
+A base é **equilibrada**, o que evita viés no treinamento e permite um modelo mais robusto.
+""")
+
+    # =========================
+    # 2. IMC
+    # =========================
+    st.subheader("⚖️ Relação entre IMC e obesidade")
 
     fig2, ax2 = plt.subplots(figsize=(10,5))
-    sns.boxplot(x="Obesity", y="IMC", data=df, palette="coolwarm", ax=ax2)
+
+    sns.boxplot(
+        data=df,
+        x="Obesity",
+        y="IMC",
+        order=order_original,
+        palette="coolwarm",
+        ax=ax2
+    )
+
     ax2.set_xticklabels(labels_pt, rotation=30)
 
     st.pyplot(fig2)
 
-    st.info("IMC é o principal fator de decisão do modelo.")
+    st.markdown("""
+### 📌 Análise do gráfico:
 
-    # ✅ ATIVIDADE
-    st.subheader("🏃 Atividade Física")
+Existe uma clara progressão do IMC conforme o nível de obesidade aumenta.
+
+➡️ A separação entre grupos é bem definida.
+
+### 🎯 Conclusão:
+O IMC é o **principal driver da classificação**, justificando sua inclusão como variável central no modelo.
+""")
+
+    # =========================
+    # 3. ATIVIDADE
+    # =========================
+    st.subheader("🏃 Atividade física vs obesidade")
 
     fig3, ax3 = plt.subplots(figsize=(10,5))
-    sns.boxplot(x="Obesity", y="FAF", data=df, palette="Blues", ax=ax3)
+
+    sns.boxplot(
+        data=df,
+        x="Obesity",
+        y="FAF",
+        order=order_original,
+        palette="Blues",
+        ax=ax3
+    )
+
     ax3.set_xticklabels(labels_pt, rotation=30)
 
     st.pyplot(fig3)
 
-    st.info("Sedentarismo está diretamente ligado à obesidade.")
+    st.markdown("""
+### 📌 Análise:
 
-    # ✅ ALIMENTAÇÃO
-    st.subheader("🍔 Alimentação")
+Observa-se que níveis mais altos de obesidade estão associados a menor frequência de atividade física.
+
+### 🎯 Conclusão:
+Sedentarismo é um dos principais fatores comportamentais ligados à obesidade.
+""")
+
+    # =========================
+    # 4. ALIMENTAÇÃO
+    # =========================
+    st.subheader("🍔 Consumo calórico vs obesidade")
 
     fig4, ax4 = plt.subplots(figsize=(10,5))
-    sns.countplot(x="FAVC", hue="Obesity", data=df, palette="Set2", ax=ax4)
+
+    sns.countplot(
+        data=df,
+        x="FAVC",
+        hue="Obesity",
+        palette="Set2",
+        ax=ax4
+    )
 
     st.pyplot(fig4)
 
-    st.info("Consumo calórico impacta diretamente o problema.")
+    st.markdown("""
+### 📌 Análise:
 
-    # ✅ PIPELINE
+A presença de consumo frequente de alimentos calóricos aumenta conforme os níveis de obesidade crescem.
+
+### 🎯 Conclusão:
+A alimentação é um fator diretamente relacionado ao aumento do peso e risco de obesidade.
+""")
+
+    # =========================
+    # PIPELINE
+    # =========================
     st.subheader("🛠️ Pipeline de Modelagem")
 
     st.markdown("""
-Etapas realizadas:
+### Etapas realizadas:
 
-- Criação da variável IMC  
-- Remoção de Height e Weight (evitar data leakage)  
-- Encoding de categóricas  
-- Random Forest  
+1. Criação do IMC  
+2. Remoção de Height e Weight (evitar leakage)  
+3. Encoding das variáveis categóricas  
+4. Treinamento com Random Forest  
 
-➡️ Resultado: modelo robusto
+### 🎯 Resultado técnico:
+Modelo com alta capacidade de generalização
 """)
 
-    st.success("✅ Acurácia: 97% (sem vazamento)")
+    st.success("✅ Acurácia final: 97%")
+
+    st.markdown("""
+O modelo inicialmente apresentou ~99%, porém foi identificado vazamento de dados.
+
+Após ajuste, a acurácia de 97% representa um modelo mais confiável e aplicável.
+""")
 
 # =========================================================
 # 🧠 CALCULADORA
@@ -185,19 +272,20 @@ elif page == "🧠 Calculadora":
 
     st.title("🧠 Calculadora de Obesidade")
 
-    gender = st.selectbox("Gênero", ["Male","Female"])
-    age = st.slider("Idade",10,80)
+    gender = st.selectbox("Gênero", ["Male", "Female"])
+    age = st.slider("Idade", 10, 80)
 
-    family_history = st.selectbox("Histórico",["yes","no"])
-    favc = st.selectbox("Comida calórica?",["yes","no"])
+    family_history = st.selectbox("Histórico", ["yes", "no"])
+    favc = st.selectbox("Comida calórica?", ["yes", "no"])
 
-    fcvc = st.slider("Vegetais",1,3)
-    ncp = st.slider("Refeições",1,5)
-    caec = st.selectbox("Lanches",["no","Sometimes","Frequently","Always"])
+    fcvc = st.slider("Vegetais", 1, 3)
+    ncp = st.slider("Refeições", 1, 5)
 
-    smoke = st.selectbox("Fuma?",["yes","no"])
+    caec = st.selectbox("Lanches", ["no","Sometimes","Frequently","Always"])
+
+    smoke = st.selectbox("Fuma?", ["yes","no"])
     ch2o = st.slider("Água",1,5)
-    scc = st.selectbox("Controla calorias?",["yes","no"])
+    scc = st.selectbox("Controle de calorias",["yes","no"])
 
     faf = st.slider("Atividade física",0,7)
     tue = st.slider("Tecnologia",0,24)
@@ -214,14 +302,14 @@ elif page == "🧠 Calculadora":
     if st.button("Prever"):
 
         input_dict = {
-            "Gender": gender, "Age": age,
-            "family_history": family_history, "FAVC": favc,
-            "FCVC": fcvc, "NCP": ncp,
-            "CAEC": caec, "SMOKE": smoke,
-            "CH2O": ch2o, "SCC": scc,
-            "FAF": faf, "TUE": tue,
-            "CALC": calc, "MTRANS": mtrans,
-            "IMC": imc
+            "Gender":gender,"Age":age,
+            "family_history":family_history,"FAVC":favc,
+            "FCVC":fcvc,"NCP":ncp,
+            "CAEC":caec,"SMOKE":smoke,
+            "CH2O":ch2o,"SCC":scc,
+            "FAF":faf,"TUE":tue,
+            "CALC":calc,"MTRANS":mtrans,
+            "IMC":imc
         }
 
         for col in encoders:
@@ -245,6 +333,9 @@ else:
 
     st.title("💡 Recomendações")
 
-    st.success("✅ Exercício regular reduz risco")
-    st.warning("⚠️ Reduzir ultraprocessados")
-    st.error("🚨 Buscar suporte médico se necessário")
+    st.success("✅ Mantenha atividade física regular")
+    st.warning("⚠️ Reduza alimentos calóricos")
+    st.error("🚨 Busque suporte médico se necessário")
+
+    st.info("📚 Baseado nos padrões identificados")
+
