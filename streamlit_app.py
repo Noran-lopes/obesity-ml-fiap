@@ -132,8 +132,8 @@ if page == "Exploração":
 # =========================================================
 # ANÁLISE + MODELAGEM FINAL COMPLETA (SEM ERRO)
 # =========================================================
-elif page == "Análise + Modelagem":
 
+elif page == "Análise + Modelagem":
     import numpy as np
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import confusion_matrix, accuracy_score
@@ -335,7 +335,6 @@ A obesidade é resultado de fatores físicos e comportamentais combinados.
 # =========================================================
 
 elif page == "Dashboard":
-
     st.title("📊 Dashboard Executivo de Obesidade")
 
     # =========================
