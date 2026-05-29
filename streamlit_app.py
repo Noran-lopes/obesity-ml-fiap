@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # =========================
 # CONFIG
 # =========================
-st.set_page_config(page_title="Obesity Analytics", layout="wide")
+st.set_page_config(page_title="Obesity Analytics App", layout="wide")
 
 # =========================
 # MENU
@@ -24,8 +24,11 @@ page = st.sidebar.radio(
 )
 
 # =========================
-# LOAD DATA
+# LOAD MODEL
 # =========================
+model = pickle.load(open("model.pkl", "rb"))
+encoders = pickle.load(open("encoders.pkl", "rb"))
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("Obesity.csv")
@@ -34,21 +37,20 @@ def load_data():
 
 df = load_data()
 
-model = pickle.load(open("model.pkl", "rb"))
-encoders = pickle.load(open("encoders.pkl", "rb"))
-
 # =========================================================
-# 📁 APRESENTAÇÃO DOS DADOS
+# 📁 APRESENTAÇÃO DOS DADOS (DATA UNDERSTANDING)
 # =========================================================
 if page == "📁 Apresentação dos Dados":
 
     st.title("📁 Apresentação do Dataset")
 
     st.subheader("📊 Visão geral")
-    st.write(f"🔢 Registros: {df.shape[0]}")
-    st.write(f"📊 Variáveis: {df.shape[1]}")
+    st.write(f"🔢 Registros: **{df.shape[0]}**")
+    st.write(f"📊 Variáveis: **{df.shape[1]}**")
+
     st.dataframe(df.head())
 
+    # Tipos
     st.subheader("📌 Tipos de dados")
     tipos = df.dtypes.reset_index()
     tipos.columns = ["Variável", "Tipo"]
@@ -57,107 +59,145 @@ if page == "📁 Apresentação dos Dados":
     st.markdown("""
 ### 📊 Classificação
 
-🔢 Quantitativos:
-- Idade, Altura, Peso, IMC, Água, Atividade
+**Quantitativos:**
+- Age, Height, Weight, FCVC, NCP, CH2O, FAF, TUE
 
-🔤 Qualitativos:
-- Gênero, Alimentação, Hábitos, Transporte, Obesidade
+**Qualitativos:**
+- Gender, family_history, FAVC, CAEC, SMOKE, SCC, CALC, MTRANS, Obesity
 """)
 
+    # Estatística descritiva
     st.subheader("📊 Estatística descritiva")
     st.write(df.describe())
 
+    # Distribuição de numéricos
+    st.subheader("📉 Distribuição das variáveis numéricas")
+
+    numeric_cols = df.select_dtypes(include=np.number).columns
+
+    for col in numeric_cols:
+        fig, ax = plt.subplots()
+        sns.histplot(df[col], kde=True, ax=ax)
+        ax.set_title(col)
+        st.pyplot(fig)
+
+    # Frequência categóricos
+    st.subheader("📋 Variáveis categóricas")
+
+    for col in df.select_dtypes(include="object").columns:
+        fig, ax = plt.subplots()
+        sns.countplot(x=col, data=df, ax=ax)
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
+
+    st.success("""
+✅ Dataset contém variáveis físicas + comportamentais  
+✅ Permite análise multidimensional da obesidade  
+""")
+
 # =========================================================
-# 📊 ANÁLISE DOS DADOS
+# 📊 ANÁLISE DOS DADOS + PIPELINE
 # =========================================================
 elif page == "📊 Análise dos Dados":
 
-    st.title("📊 Análise Estratégica da Obesidade")
+    st.title("📊 Análise Estratégica e Modelagem")
 
-    # DISTRIBUIÇÃO
+    # 1. DISTRIBUIÇÃO
     st.subheader("📊 Distribuição dos níveis de obesidade")
 
-    fig, ax = plt.subplots(figsize=(10,5))
+fig, ax = plt.subplots(figsize=(10,5))
 
-    sns.countplot(x="Obesity", data=df, palette="viridis", ax=ax)
+# gráfico base
+sns.countplot(x="Obesity", data=df, ax=ax, palette="Blues_r")
 
-    labels_pt = [
-        "Peso normal", "Sobrepeso I", "Sobrepeso II",
-        "Obesidade I", "Abaixo do peso",
-        "Obesidade II", "Obesidade III"
-    ]
+# remover eixo Y (count)
+ax.set_ylabel("")
+ax.set_yticks([])
 
-    ax.set_xticklabels(labels_pt, rotation=30)
-    ax.set_ylabel("")
-    ax.set_yticks([])
+# melhorar visual dos labels
+plt.xticks(rotation=30)
 
-    for p in ax.patches:
-        ax.annotate(
-            f'{int(p.get_height())}',
-            (p.get_x() + p.get_width()/2., p.get_height()),
-            ha='center',
-            va='bottom'
-        )
+# adicionar valores nas barras
+for p in ax.patches:
+    height = int(p.get_height())
+    ax.annotate(
+        f'{height}',
+        (p.get_x() + p.get_width() / 2., height),
+        ha='center',
+        va='bottom',
+        fontsize=10,
+        fontweight='bold'
+    )
 
-    st.pyplot(fig)
+# título mais limpo
+ax.set_title("Distribuição por nível de obesidade", fontsize=14)
 
-    st.info("Distribuição equilibrada → modelo robusto.")
+st.pyplot(fig)
+
+
+    # 2. RELAÇÕES
+    st.header("⚖️ 2. Variáveis-chave")
 
     # IMC
-    st.subheader("⚖️ IMC vs obesidade")
-
-    fig2, ax2 = plt.subplots(figsize=(10,5))
-
-    sns.boxplot(x="Obesity", y="IMC", data=df, palette="coolwarm", ax=ax2)
-    ax2.set_xticklabels(labels_pt, rotation=30)
-
+    fig2, ax2 = plt.subplots()
+    sns.boxplot(x="Obesity", y="IMC", data=df, ax=ax2)
+    plt.xticks(rotation=45)
     st.pyplot(fig2)
 
-    st.info("IMC é o principal fator de classificação.")
-
-    # ATIVIDADE
-    st.subheader("🏃 Atividade física")
-
-    fig3, ax3 = plt.subplots(figsize=(10,5))
-    sns.boxplot(x="Obesity", y="FAF", data=df, palette="Blues", ax=ax3)
-    ax3.set_xticklabels(labels_pt, rotation=30)
-
+    # Atividade
+    fig3, ax3 = plt.subplots()
+    sns.boxplot(x="Obesity", y="FAF", data=df, ax=ax3)
+    plt.xticks(rotation=45)
     st.pyplot(fig3)
 
-    st.info("Sedentarismo está ligado ao aumento da obesidade.")
-
-    # ALIMENTAÇÃO
-    st.subheader("🍔 Alimentação calórica")
-
-    fig4, ax4 = plt.subplots(figsize=(10,5))
-    sns.countplot(x="FAVC", hue="Obesity", data=df, palette="Set2", ax=ax4)
-
+    # Alimentação
+    fig4, ax4 = plt.subplots()
+    sns.countplot(x="FAVC", hue="Obesity", data=df, ax=ax4)
     st.pyplot(fig4)
 
-    st.info("Consumo calórico influencia fortemente a obesidade.")
-
-    # PIPELINE
-    st.subheader("🛠️ Preparação e Modelagem")
-
-    st.markdown("""
-✔ Criação do IMC  
-✔ Remoção de Height e Weight (evitar leakage)  
-✔ Encoding das variáveis categóricas  
-✔ Random Forest  
-
+    st.success("""
+🔍 Insights:
+- IMC é principal driver
+- Sedentarismo impacta obesidade
+- Alimentação calórica influencia diretamente
 """)
 
-    # RESULTADO
-    st.subheader("📈 Resultado")
-
-    st.success("✅ Acurácia final: 97%")
+    # 3. PREPARAÇÃO
+    st.header("🛠️ 3. Preparação dos dados")
 
     st.markdown("""
-Inicialmente: ~99%  
-Após ajuste (sem vazamento): 97%  
+- Criação do IMC  
+- Remoção de Weight e Height  
+- Encoding das variáveis categóricas  
+- Split treino/teste  
+
+🎯 Objetivo: evitar data leakage e melhorar generalização
+""")
+
+    # 4. MODELAGEM
+    st.header("🤖 4. Modelagem")
+
+    st.markdown("""
+Algoritmo: Random Forest  
+
+✔ Captura relações complexas  
+✔ Funciona bem com dados mistos  
+✔ Alta precisão em classificação  
+""")
+
+    # 5. RESULTADO
+    st.header("📈 5. Resultado")
+
+    st.success("✅ Accuracy final: **97%**")
+
+    st.markdown("""
+Inicialmente: ~99% → identificado data leakage  
+
+Após correção: ~97%  
 
 ✔ Modelo confiável  
-✔ Boa generalização
+✔ Generalização real  
+✔ Aplicável em cenário real  
 """)
 
 # =========================================================
@@ -175,9 +215,10 @@ elif page == "🧠 Calculadora":
 
     fcvc = st.slider("Vegetais", 1, 3)
     ncp = st.slider("Refeições", 1, 5)
-    caec = st.selectbox("Lanches", ["no", "Sometimes", "Frequently", "Always"])
 
+    caec = st.selectbox("Lanches (doces, fast-food)", ["no", "Sometimes", "Frequently", "Always"])
     smoke = st.selectbox("Fuma?", ["yes", "no"])
+
     ch2o = st.slider("Água (L)", 1, 5)
     scc = st.selectbox("Controla calorias?", ["yes", "no"])
 
@@ -196,13 +237,20 @@ elif page == "🧠 Calculadora":
     if st.button("Prever"):
 
         input_dict = {
-            "Gender": gender, "Age": age,
-            "family_history": family_history, "FAVC": favc,
-            "FCVC": fcvc, "NCP": ncp,
-            "CAEC": caec, "SMOKE": smoke,
-            "CH2O": ch2o, "SCC": scc,
-            "FAF": faf, "TUE": tue,
-            "CALC": calc, "MTRANS": mtrans,
+            "Gender": gender,
+            "Age": age,
+            "family_history": family_history,
+            "FAVC": favc,
+            "FCVC": fcvc,
+            "NCP": ncp,
+            "CAEC": caec,
+            "SMOKE": smoke,
+            "CH2O": ch2o,
+            "SCC": scc,
+            "FAF": faf,
+            "TUE": tue,
+            "CALC": calc,
+            "MTRANS": mtrans,
             "IMC": imc
         }
 
@@ -215,12 +263,17 @@ elif page == "🧠 Calculadora":
         pred = int(model.predict(input_array)[0])
 
         labels = [
-            "Abaixo do peso", "Normal",
-            "Sobrepeso I", "Sobrepeso II",
-            "Obesidade I", "Obesidade II", "Obesidade III"
+            "Abaixo do peso",
+            "Normal",
+            "Sobrepeso I",
+            "Sobrepeso II",
+            "Obesidade I",
+            "Obesidade II",
+            "Obesidade III"
         ]
 
         st.success(f"✅ Resultado: {labels[pred]}")
+
         st.progress((pred + 1) / 7)
 
 # =========================================================
@@ -228,16 +281,10 @@ elif page == "🧠 Calculadora":
 # =========================================================
 else:
 
-    st.title("💡 Recomendações de Saúde")
+    st.title("💡 Recomendações")
 
     st.success("✅ Pratique atividade física regularmente")
     st.warning("⚠️ Reduza alimentos ultraprocessados")
-    st.error("🚨 Busque orientação médica em casos avançados")
+    st.error("🚨 Procure acompanhamento médico se necessário")
 
-    st.info("📚 Baseado nos dados e boas práticas de saúde")
-
-
-        diff = peso - peso_ideal
-
-        if diff > 0:
-            st.write(f"Reduzindo {diff:.1f} kg você entra em uma faixa mais saudável.")
+    st.info("📚 Baseado em padrões dos dados e OMS")
