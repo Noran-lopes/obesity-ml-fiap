@@ -13,7 +13,7 @@ st.set_page_config(page_title="Obesity App", layout="wide")
 # =========================
 # MENU
 # =========================
-page = st.sidebar.selectbox(
+page = st.sidebar.radio(
     "Navegação",
     ["📊 Análise dos Dados", "🧠 Calculadora", "💡 Recomendações"]
 )
