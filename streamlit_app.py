@@ -9,15 +9,15 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 # =========================================================
-# ⚙️ CONFIGURAÇÃO
+# ⚙️ CONFIG
 # =========================================================
 st.set_page_config(page_title="Obesity Analytics", layout="wide")
 
 # =========================================================
-# 📊 MENU
+# MENU
 # =========================================================
 page = st.sidebar.radio(
     "📊 Navegação",
@@ -30,7 +30,7 @@ page = st.sidebar.radio(
 )
 
 # =========================================================
-# 📥 LOAD DATA
+# LOAD DATA
 # =========================================================
 @st.cache_data
 def load_data():
@@ -41,7 +41,7 @@ def load_data():
 df = load_data()
 
 # =========================================================
-# 🤖 LOAD MODEL
+# LOAD MODEL
 # =========================================================
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
@@ -79,14 +79,11 @@ if page == "📁 Apresentação dos Dados":
     st.write(f"Registros: {df.shape[0]}")
     st.write(f"Variáveis: {df.shape[1]}")
 
-    # Tipos + descrição
+    st.subheader("Tipos de dados")
     tipos = df.dtypes.reset_index()
     tipos.columns = ["Variável", "Tipo técnico"]
-
-    st.subheader("Tipos de dados")
     st.dataframe(tipos, use_container_width=True)
 
-    # Estatísticas
     st.subheader("Estatísticas descritivas")
     stats = df.describe().T[["mean", "min", "max"]]
     stats.columns = ["Média", "Mínimo", "Máximo"]
@@ -99,70 +96,56 @@ elif page == "📊 Análise + Modelagem":
 
     st.title("📊 Análise e Modelagem")
 
-    # =========================
+    # -------------------------
     # IDADE VS OBESIDADE
-    # =========================
+    # -------------------------
     st.subheader("Idade vs obesidade")
 
     fig, ax = plt.subplots(figsize=(10,5))
-    sns.boxplot(
-        data=df,
-        x="Obesity",
-        y="Age",
-        order=order_original,
-        palette="viridis"
-    )
-
+    sns.boxplot(data=df, x="Obesity", y="Age", order=order_original, palette="viridis")
     ax.set_xticklabels(labels_pt, rotation=30)
 
     st.pyplot(fig)
 
     st.markdown("""
-Observa-se aumento gradual da idade conforme os níveis de obesidade crescem.
+A idade apresenta tendência crescente conforme os níveis de obesidade aumentam.
 
 ### Outliers
-Há presença de valores fora do padrão (outliers), representados pelos pontos acima dos limites das caixas.
+Observam-se valores acima do padrão (outliers), indicando indivíduos significativamente mais velhos.
 
-Esses valores indicam indivíduos significativamente mais velhos dentro de determinadas classes.
-
-➡️ Interpretação:
-Os outliers refletem variações reais da população e indicam que a obesidade pode ocorrer também em faixas etárias mais avançadas.
+➡️ Esses pontos representam variabilidade real da população.
 
 ### Conclusão
-A idade contribui para o risco, mas atua em conjunto com hábitos e estilo de vida.
+A idade influencia o risco, mas não de forma isolada.
 """)
 
-    # =========================
+    # ======================================================
     # MODELAGEM
-    # =========================
-    st.subheader("🧠 Metodologia de modelagem")
+    # ======================================================
+    st.subheader("🧠 Metodologia de Modelagem")
 
     st.markdown("""
-### Preparação dos dados
-- Criação da variável IMC  
-- Remoção de Height e Weight (evitar vazamento de dados)  
+- Criação do IMC  
+- Remoção de Height e Weight (evitar leakage)  
 - Encoding de variáveis categóricas  
+- Modelo utilizado: Random Forest  
 
-### Modelo
-Foi utilizado o algoritmo Random Forest.
-
-### Justificativa
-- Lida bem com dados numéricos e categóricos  
-- Captura relações não lineares  
-- É robusto a outliers  
+✅ Justificativa:
+- Lida bem com dados mistos  
+- Modela relações não lineares  
+- Robusto a outliers  
 - Reduz overfitting  
 
-### Estratégia
+✅ Validação:
 - Divisão treino/teste (80/20)
-- Avaliação com dados não vistos
 
-### Resultado
-Acurácia aproximada de 97%, indicando boa generalização.
+✅ Resultado:
+Acurácia de aproximadamente 97%.
 """)
 
-    # =========================
-    # AVALIAÇÃO DO MODELO
-    # =========================
+    # ======================================================
+    # AVALIAÇÃO
+    # ======================================================
     st.subheader("📊 Avaliação do modelo")
 
     df_model = df.drop(["Weight", "Height"], axis=1)
@@ -181,25 +164,16 @@ Acurácia aproximada de 97%, indicando boa generalização.
 
     acc = accuracy_score(y_test, y_pred)
 
-    st.metric("Acurácia do modelo", f"{acc:.2%}")
+    st.metric("Acurácia", f"{acc:.2%}")
 
-    # MATRIZ DE CONFUSÃO
-    st.subheader("Matriz de confusão")
-
+    # MATRIZ
     fig_cm, ax_cm = plt.subplots()
     sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues")
-
     st.pyplot(fig_cm)
 
-    st.markdown("""
-A matriz indica alta taxa de acerto, com erros concentrados entre classes próximas.
-
-Isso é esperado devido à continuidade das categorias de obesidade.
-""")
-
-    # =========================
-    # FEATURE IMPORTANCE (🔥 NOVO)
-    # =========================
+    # ======================================================
+    # FEATURE IMPORTANCE
+    # ======================================================
     st.subheader("📊 Importância das variáveis")
 
     importances = model.feature_importances_
@@ -209,62 +183,112 @@ Isso é esperado devido à continuidade das categorias de obesidade.
         "Importância": importances
     }).sort_values(by="Importância", ascending=False)
 
-    # gráfico
     fig_imp, ax_imp = plt.subplots(figsize=(10,5))
-    sns.barplot(
-        data=importance_df,
-        x="Importância",
-        y="Variável",
-        palette="viridis",
-        ax=ax_imp
-    )
+    sns.barplot(data=importance_df, x="Importância", y="Variável", palette="viridis")
 
     st.pyplot(fig_imp)
 
     st.markdown("""
-### 📌 Interpretação
+O IMC é a variável mais relevante, seguido de fatores comportamentais como atividade física e alimentação.
 
-O gráfico mostra o peso de cada variável na tomada de decisão do modelo.
-
-Observa-se que:
-
-- O IMC é a variável mais relevante  
-- Atividade física e alimentação também possuem forte impacto  
-- Variáveis comportamentais complementam a previsão  
-
-### 🎯 Conclusão
-
-Os fatores mais importantes identificados pelo modelo estão alinhados com a análise exploratória,
-o que reforça a consistência e confiabilidade do resultado.
+Isso reforça a consistência do modelo com os padrões observados na análise.
 """)
 
 # =========================================================
-# 🧠 CALCULADORA
+# 🧠 CALCULADORA COMPLETA + RECOMENDAÇÃO
 # =========================================================
 elif page == "🧠 Calculadora":
 
     st.title("🧠 Predição de Obesidade")
 
+    gender = st.selectbox("Gênero", ["Male", "Female"])
     age = st.slider("Idade", 10, 80)
+
+    family_history = st.selectbox("Histórico familiar", ["yes", "no"])
+    favc = st.selectbox("Consome alimentos calóricos frequentes?", ["yes", "no"])
+
+    fcvc = st.slider("Consumo de vegetais", 1, 3)
+    ncp = st.slider("Refeições diárias", 1, 5)
+
+    caec = st.selectbox("Lanches", ["no", "Sometimes", "Frequently", "Always"])
+
+    smoke = st.selectbox("Fuma?", ["yes", "no"])
+    ch2o = st.slider("Água (litros)", 1, 5)
+
+    scc = st.selectbox("Controla calorias?", ["yes", "no"])
+
+    faf = st.slider("Atividade física", 0, 7)
+    tue = st.slider("Tempo de tecnologia", 0, 24)
+
+    calc = st.selectbox("Álcool", ["no", "Sometimes", "Frequently", "Always"])
+
+    mtrans = st.selectbox("Transporte", ["Walking", "Bike", "Public_Transportation", "Automobile", "Motorbike"])
+
     peso = st.number_input("Peso", 30.0, 200.0)
     altura = st.number_input("Altura", 1.40, 2.20)
 
-    imc = peso / (altura ** 2)
-
+    imc = peso / (altura**2)
     st.write(f"IMC: {imc:.2f}")
 
+    if st.button("Prever"):
+
+        input_dict = {
+            "Gender": gender,
+            "Age": age,
+            "family_history": family_history,
+            "FAVC": favc,
+            "FCVC": fcvc,
+            "NCP": ncp,
+            "CAEC": caec,
+            "SMOKE": smoke,
+            "CH2O": ch2o,
+            "SCC": scc,
+            "FAF": faf,
+            "TUE": tue,
+            "CALC": calc,
+            "MTRANS": mtrans,
+            "IMC": imc
+        }
+
+        # encoding
+        for col in encoders:
+            if col in input_dict:
+                input_dict[col] = encoders[col].transform([input_dict[col]])[0]
+
+        input_array = np.array(list(input_dict.values())).reshape(1, -1)
+        pred = int(model.predict(input_array)[0])
+
+        st.success(f"Resultado: {labels_pt[pred]}")
+        st.progress((pred + 1) / 7)
+
+        # ======================
+        # RECOMENDAÇÕES
+        # ======================
+        st.subheader("💡 Recomendações")
+
+        if fcvc <= 1:
+            st.write("🥦 Aumentar consumo de vegetais pode ajudar no controle de peso.")
+
+        if faf <= 1:
+            st.write("🏃 Aumentar atividade física é essencial para reduzir risco.")
+
+        if favc == "yes":
+            st.write("🍔 Reduzir alimentos calóricos pode melhorar o quadro.")
+
+        if tue >= 6:
+            st.write("📱 Reduzir tempo de tela ajuda a diminuir sedentarismo.")
+
+        if pred >= 4:
+            st.write("⚠️ Recomenda-se procurar acompanhamento profissional.")
+
 # =========================================================
-# 💡 RECOMENDAÇÕES
+# 💡 RECOMENDAÇÕES GERAIS
 # =========================================================
 else:
 
-    st.title("💡 Recomendações")
+    st.title("💡 Recomendações gerais")
 
-    st.markdown("""
-- Praticar atividade física regularmente  
-- Reduzir consumo de alimentos calóricos  
-- Monitorar o IMC  
-- Diminuir comportamento sedentário  
-
-Essas recomendações são baseadas nos padrões identificados na análise dos dados.
-""")
+    st.write("✔ Pratique atividade física regularmente")
+    st.write("✔ Reduza alimentos ultraprocessados")
+    st.write("✔ Controle o IMC")
+    st.write("✔ Reduza comportamento sedentário")
