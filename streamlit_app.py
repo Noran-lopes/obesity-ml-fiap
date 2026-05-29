@@ -5,6 +5,9 @@ import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
 # =========================
 # CONFIG
 # =========================
@@ -17,7 +20,7 @@ page = st.sidebar.radio(
     "📊 Navegação",
     [
         "📁 Apresentação dos Dados",
-        "📊 Análise dos Dados",
+        "📊 Análise + Modelagem",
         "🧠 Calculadora",
         "💡 Recomendações"
     ]
@@ -37,9 +40,7 @@ df = load_data()
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
 
-# =========================
-# ORDEM CORRETA (REQUISITO)
-# =========================
+# ORDEM CORRETA
 order_original = [
     "Insufficient_Weight",
     "Normal_Weight",
@@ -67,8 +68,8 @@ if page == "📁 Apresentação dos Dados":
 
     st.title("📁 Entendimento do Dataset")
 
-    st.write(f"📊 Registros: {df.shape[0]}")
-    st.write(f"📊 Variáveis: {df.shape[1]}")
+    st.write(f"Registros: {df.shape[0]}")
+    st.write(f"Variáveis: {df.shape[1]}")
 
     tipos = df.dtypes.reset_index()
     tipos.columns = ["Variável", "Tipo técnico"]
@@ -84,10 +85,10 @@ if page == "📁 Apresentação dos Dados":
         "NCP": "Refeições por dia",
         "CAEC": "Lanches",
         "SMOKE": "Fumante",
-        "CH2O": "Consumo de água",
+        "CH2O": "Água (litros)",
         "SCC": "Controle de calorias",
         "FAF": "Atividade física",
-        "TUE": "Tempo de tecnologia",
+        "TUE": "Tempo de tela",
         "CALC": "Álcool",
         "MTRANS": "Transporte",
         "Obesity": "Nível de obesidade"
@@ -97,195 +98,143 @@ if page == "📁 Apresentação dos Dados":
 
     st.dataframe(tipos, use_container_width=True)
 
-    st.info("""
-O dataset combina:
-
-🔹 Dados físicos (IMC, idade)  
-🔹 Dados comportamentais (atividade, alimentação)
-
-➡️ Permite modelagem completa do risco de obesidade
-""")
+    st.info("O dataset combina dados físicos e comportamentais, permitindo análise abrangente do risco de obesidade.")
 
 # =========================================================
-# 📊 ANÁLISE DOS DADOS
+# 📊 ANÁLISE + MODELO
 # =========================================================
-elif page == "📊 Análise dos Dados":
+elif page == "📊 Análise + Modelagem":
 
-    st.title("📊 Análise Exploratória + Pipeline Analítico")
+    st.title("📊 Análise e Modelagem")
 
-    # =========================
-    # 1. DISTRIBUIÇÃO
-    # =========================
-    st.subheader("📊 Distribuição dos níveis de obesidade")
+    # DISTRIBUIÇÃO
+    st.subheader("Distribuição dos níveis de obesidade")
 
     fig, ax = plt.subplots(figsize=(10,5))
-
-    sns.countplot(
-        data=df,
-        x="Obesity",
-        order=order_original,
-        palette="viridis",
-        ax=ax
-    )
+    sns.countplot(data=df, x="Obesity", order=order_original, palette="viridis", ax=ax)
 
     ax.set_xticklabels(labels_pt, rotation=30)
     ax.set_ylabel("")
     ax.set_yticks([])
 
     for p in ax.patches:
-        ax.annotate(
-            f"{int(p.get_height())}",
-            (p.get_x() + p.get_width()/2., p.get_height()),
-            ha="center"
-        )
+        ax.annotate(f"{int(p.get_height())}", (p.get_x()+p.get_width()/2., p.get_height()), ha="center")
 
     st.pyplot(fig)
 
     st.markdown("""
-### 📌 Análise do gráfico:
-
-A distribuição dos dados mostra que todas as classes de obesidade possuem volume relevante de observações.
-
-➡️ Destaque para:
-- **Obesidade Tipo I (~351 casos)** como maior grupo
-- **Abaixo do peso (~272 casos)** como menor grupo
-
-### 🎯 Conclusão:
-A base é **equilibrada**, o que evita viés no treinamento e permite um modelo mais robusto.
+A distribuição mostra boa representatividade entre as classes, com maior concentração em obesidade tipo I e menor em abaixo do peso.  
+Isso contribui para treinamento equilibrado e reduz viés no modelo.
 """)
 
-    # =========================
-    # 2. IMC
-    # =========================
-    st.subheader("⚖️ Relação entre IMC e obesidade")
+    # IMC
+    st.subheader("IMC vs obesidade")
 
     fig2, ax2 = plt.subplots(figsize=(10,5))
-
-    sns.boxplot(
-        data=df,
-        x="Obesity",
-        y="IMC",
-        order=order_original,
-        palette="coolwarm",
-        ax=ax2
-    )
+    sns.boxplot(data=df, x="Obesity", y="IMC", order=order_original, palette="coolwarm", ax=ax2)
 
     ax2.set_xticklabels(labels_pt, rotation=30)
-
     st.pyplot(fig2)
 
     st.markdown("""
-### 📌 Análise do gráfico:
-
-Existe uma clara progressão do IMC conforme o nível de obesidade aumenta.
-
-➡️ A separação entre grupos é bem definida.
-
-### 🎯 Conclusão:
-O IMC é o **principal driver da classificação**, justificando sua inclusão como variável central no modelo.
+Observa-se progressão clara do IMC entre as categorias, indicando que o indicador é consistente e discriminatório.  
+Esse comportamento valida o IMC como principal variável explicativa.
 """)
 
-    # =========================
-    # 3. ATIVIDADE
-    # =========================
-    st.subheader("🏃 Atividade física vs obesidade")
-
-    fig3, ax3 = plt.subplots(figsize=(10,5))
-
-    sns.boxplot(
-        data=df,
-        x="Obesity",
-        y="FAF",
-        order=order_original,
-        palette="Blues",
-        ax=ax3
-    )
-
-    ax3.set_xticklabels(labels_pt, rotation=30)
-
-    st.pyplot(fig3)
-
-    st.markdown("""
-### 📌 Análise:
-
-Observa-se que níveis mais altos de obesidade estão associados a menor frequência de atividade física.
-
-### 🎯 Conclusão:
-Sedentarismo é um dos principais fatores comportamentais ligados à obesidade.
-""")
-
-    # =========================
-    # 4. ALIMENTAÇÃO
-    # =========================
-    st.subheader("🍔 Consumo calórico vs obesidade")
-
-    fig4, ax4 = plt.subplots(figsize=(10,5))
-
-    sns.countplot(
-        data=df,
-        x="FAVC",
-        hue="Obesity",
-        palette="Set2",
-        ax=ax4
-    )
-
-    st.pyplot(fig4)
-
-    st.markdown("""
-### 📌 Análise:
-
-A presença de consumo frequente de alimentos calóricos aumenta conforme os níveis de obesidade crescem.
-
-### 🎯 Conclusão:
-A alimentação é um fator diretamente relacionado ao aumento do peso e risco de obesidade.
-""")
-
-    # =========================
     # PIPELINE
-    # =========================
-    st.subheader("🛠️ Pipeline de Modelagem")
+    st.subheader("Pipeline de modelagem")
 
     st.markdown("""
-### Etapas realizadas:
+- Criação do IMC  
+- Remoção de peso e altura (evitar vazamento)  
+- Encoding de variáveis categóricas  
+- Treinamento com Random Forest  
 
-1. Criação do IMC  
-2. Remoção de Height e Weight (evitar leakage)  
-3. Encoding das variáveis categóricas  
-4. Treinamento com Random Forest  
-
-### 🎯 Resultado técnico:
-Modelo com alta capacidade de generalização
+O modelo foi projetado para capturar relações não lineares presentes nos dados.
 """)
 
-    st.success("✅ Acurácia final: 97%")
+    # =================================================
+    # AVALIAÇÃO
+    # =================================================
+    st.subheader("Avaliação do modelo")
+
+    df_model = df.drop(["Weight", "Height"], axis=1)
+
+    for col in df_model.select_dtypes(include="object").columns:
+        df_model[col] = encoders[col].transform(df_model[col])
+
+    X = df_model.drop("Obesity", axis=1)
+    y = df_model["Obesity"]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    y_pred = model.predict(X_test)
+
+    acc = accuracy_score(y_test, y_pred)
+
+    st.metric("Acurácia", f"{acc:.2%}")
 
     st.markdown("""
-O modelo inicialmente apresentou ~99%, porém foi identificado vazamento de dados.
-
-Após ajuste, a acurácia de 97% representa um modelo mais confiável e aplicável.
+O modelo foi avaliado em dados não utilizados no treinamento.  
+A acurácia indica alta capacidade de generalização, sem evidências de overfitting.
 """)
+
+    # MATRIZ
+    fig_cm, ax_cm = plt.subplots()
+    sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues")
+    st.pyplot(fig_cm)
+
+    st.markdown("""
+A matriz de confusão mostra predominância de acertos na diagonal principal.  
+Erros ocorrem principalmente entre categorias próximas.
+""")
+
+    # IMPORTÂNCIA
+    st.subheader("Importância das variáveis")
+
+    importances = model.feature_importances_
+
+    importance_df = pd.DataFrame({
+        "Variável": X.columns,
+        "Importância": importances
+    }).sort_values(by="Importância", ascending=False)
+
+    st.bar_chart(importance_df.set_index("Variável"))
+
+    st.markdown("""
+Variáveis como IMC, atividade física e alimentação destacam-se como determinantes,  
+alinhando o modelo com o entendimento do problema.
+""")
+
+    # REPORT
+    st.subheader("Métricas por classe")
+
+    report = classification_report(y_test, y_pred, output_dict=True)
+    st.dataframe(pd.DataFrame(report).transpose())
 
 # =========================================================
 # 🧠 CALCULADORA
 # =========================================================
 elif page == "🧠 Calculadora":
 
-    st.title("🧠 Calculadora de Obesidade")
+    st.title("Calculadora de Obesidade")
 
-    gender = st.selectbox("Gênero", ["Male", "Female"])
-    age = st.slider("Idade", 10, 80)
+    gender = st.selectbox("Gênero", ["Male","Female"])
+    age = st.slider("Idade",10,80)
 
-    family_history = st.selectbox("Histórico", ["yes", "no"])
-    favc = st.selectbox("Comida calórica?", ["yes", "no"])
+    family_history = st.selectbox("Histórico",["yes","no"])
+    favc = st.selectbox("Calorias frequentes?",["yes","no"])
 
-    fcvc = st.slider("Vegetais", 1, 3)
-    ncp = st.slider("Refeições", 1, 5)
+    fcvc = st.slider("Vegetais",1,3)
+    ncp = st.slider("Refeições",1,5)
 
-    caec = st.selectbox("Lanches", ["no","Sometimes","Frequently","Always"])
+    caec = st.selectbox("Lanches",["no","Sometimes","Frequently","Always"])
+    smoke = st.selectbox("Fuma?",["yes","no"])
 
-    smoke = st.selectbox("Fuma?", ["yes","no"])
     ch2o = st.slider("Água",1,5)
-    scc = st.selectbox("Controle de calorias",["yes","no"])
+    scc = st.selectbox("Controle calórico",["yes","no"])
 
     faf = st.slider("Atividade física",0,7)
     tue = st.slider("Tecnologia",0,24)
@@ -297,7 +246,6 @@ elif page == "🧠 Calculadora":
     altura = st.number_input("Altura",1.40,2.20)
 
     imc = peso/(altura**2)
-    st.write(f"IMC: {imc:.2f}")
 
     if st.button("Prever"):
 
@@ -318,12 +266,9 @@ elif page == "🧠 Calculadora":
 
         pred = int(model.predict(np.array(list(input_dict.values())).reshape(1,-1))[0])
 
-        labels = [
-            "Abaixo do peso","Normal","Sobrepeso I",
-            "Sobrepeso II","Obesidade I","Obesidade II","Obesidade III"
-        ]
+        labels = labels_pt
 
-        st.success(f"✅ Resultado: {labels[pred]}")
+        st.success(f"Resultado: {labels[pred]}")
         st.progress((pred+1)/7)
 
 # =========================================================
@@ -331,11 +276,8 @@ elif page == "🧠 Calculadora":
 # =========================================================
 else:
 
-    st.title("💡 Recomendações")
+    st.title("Recomendações")
 
-    st.success("✅ Mantenha atividade física regular")
-    st.warning("⚠️ Reduza alimentos calóricos")
-    st.error("🚨 Busque suporte médico se necessário")
-
-    st.info("📚 Baseado nos padrões identificados")
-
+    st.write("Manter atividade física regular contribui para redução de risco.")
+    st.write("Alimentação equilibrada é fator determinante.")
+    st.write("Casos avançados requerem acompanhamento profissional.")
