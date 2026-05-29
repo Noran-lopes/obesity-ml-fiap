@@ -107,6 +107,7 @@ if page == "Exploração":
     # =========================
     # 📋 VISUALIZAÇÃO DOS DADOS
     # =========================
+    
     st.subheader("🔍 Amostra dos Dados")
     st.write(df.head())
 
