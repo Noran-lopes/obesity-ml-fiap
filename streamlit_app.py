@@ -294,14 +294,14 @@ elif page == "Análise + Modelagem":
     else:
         st.error(f"Coluna não encontrada: {df.columns}")
 # =========================================================
-# DASHBOARD EXECUTIVO (VERSÃO FINAL)
+# DASHBOARD EXECUTIVO FINAL
 # =========================================================
 elif page == "Dashboard":
 
     st.title("📊 Dashboard Executivo de Obesidade")
 
     # =========================
-    # KPIs
+    # 📊 KPIs
     # =========================
     col1, col2, col3 = st.columns(3)
 
@@ -312,7 +312,7 @@ elif page == "Dashboard":
     st.divider()
 
     # =========================
-    # ORDEM DAS CLASSES
+    # 🔥 ORDEM DAS CLASSES
     # =========================
     ordem = [
         "Insufficient_Weight",
@@ -344,7 +344,7 @@ elif page == "Dashboard":
         )
 
     # =========================================================
-    # LINHA 1 — DISTRIBUIÇÃO + IMC
+    # 📊 LINHA 1 — DISTRIBUIÇÃO + IMC
     # =========================================================
     col1, col2 = st.columns(2)
 
@@ -373,10 +373,24 @@ elif page == "Dashboard":
 
         st.pyplot(fig)
 
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    A distribuição dos níveis de obesidade evidencia a concentração da população em diferentes faixas de risco.
+
+    🔎 **Insights:**
+    - Há maior concentração em níveis intermediários  
+    - O IMC cresce de forma consistente entre as categorias  
+    - Existe separação clara entre níveis saudáveis e obesidade  
+
+    🎯 **Conclusão:**
+    O IMC é um excelente indicador para segmentação dos níveis de obesidade.
+    """)
+
     st.divider()
 
     # =========================================================
-    # LINHA 2 — DISTRIBUIÇÕES
+    # 📊 LINHA 2 — DISTRIBUIÇÕES
     # =========================================================
     col1, col2 = st.columns(2)
 
@@ -402,19 +416,30 @@ elif page == "Dashboard":
 
         st.pyplot(fig)
 
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    As distribuições permitem entender o perfil da população analisada.
+
+    🔎 **Insights:**
+    - O IMC apresenta variação significativa entre indivíduos  
+    - A idade se concentra em determinadas faixas  
+
+    🎯 **Conclusão:**
+    A variabilidade reforça a necessidade de análise individualizada no diagnóstico de obesidade.
+    """)
+
     st.divider()
 
     # =========================================================
-    # LINHA 3 — COMPORTAMENTO (CORRIGIDO ✅)
+    # 📊 LINHA 3 — COMPORTAMENTO (CORRIGIDO)
     # =========================================================
     col1, col2 = st.columns(2)
 
-    # 🔥 FAF CORRETO
     with col1:
         st.subheader("Atividade Física (FAF)")
 
         df_plot["FAF"] = df_plot["FAF"].round(0).astype(int)
-
         faf_counts = df_plot["FAF"].value_counts().sort_index()
 
         fig, ax = plt.subplots()
@@ -433,12 +458,10 @@ elif page == "Dashboard":
 
         st.pyplot(fig)
 
-    # 🔥 FCVC CORRETO
     with col2:
         st.subheader("Consumo de Vegetais (FCVC)")
 
         df_plot["FCVC"] = df_plot["FCVC"].round(0).astype(int)
-
         fcvc_counts = df_plot["FCVC"].value_counts().sort_index()
 
         fig, ax = plt.subplots()
@@ -456,20 +479,46 @@ elif page == "Dashboard":
 
         st.pyplot(fig)
 
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    Os hábitos comportamentais mostram padrões importantes relacionados à saúde.
+
+    🔎 **Insights:**
+    - Grande parte da população apresenta níveis baixos ou moderados de atividade física  
+    - O consumo de vegetais não está predominante em níveis elevados  
+
+    🎯 **Conclusão:**
+    O comportamento (atividade física e alimentação) é um dos principais fatores associados ao risco de obesidade.
+    """)
+
     st.divider()
 
     # =========================================================
-    # LINHA 4 — CORRELAÇÃO
+    # 📊 LINHA 4 — CORRELAÇÃO
     # =========================================================
     st.subheader("Correlação entre Variáveis")
 
     fig, ax = plt.subplots()
 
     corr = df[["Age", "IMC", "FAF", "FCVC", "CH2O"]].corr()
-
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
 
     st.pyplot(fig)
+
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    A matriz de correlação evidencia as relações entre variáveis numéricas.
+
+    🔎 **Insights:**
+    - IMC possui correlação positiva com idade  
+    - Atividade física apresenta relação negativa com IMC  
+    - As correlações são moderadas  
+
+    🎯 **Conclusão:**
+    A obesidade é um fenômeno multifatorial, não sendo explicada por uma única variável isolada.
+    """)
 # =========================================================
 # CALCULADORA UX/UI MELHORADA
 # =========================================================
