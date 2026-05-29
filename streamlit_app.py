@@ -442,15 +442,15 @@ elif page == "Dashboard":
 
     st.pyplot(fig)
 # =========================================================
-# CALCULADORA
+# CALCULADORA COMPLETA
 # =========================================================
 elif page == "Calculadora":
 
     st.title("🧠 Simulador Inteligente de Obesidade")
 
-    # =========================================================
-    # INPUTS (ORGANIZADOS)
-    # =========================================================
+    # =========================
+    # INPUTS
+    # =========================
     col1, col2 = st.columns(2)
 
     with col1:
@@ -463,9 +463,9 @@ elif page == "Calculadora":
         faf = st.slider("Atividade Física (0=baixa | 3=alta)", 0, 3, 1)
         fcvc = st.slider("Consumo de Vegetais (1=baixo | 3=alto)", 1, 3, 2)
         ch2o = st.slider("Consumo de Água (1=baixo | 3=alto)", 1, 3, 2)
-        favc = st.selectbox("Alimentos calóricos frequentes?", ["yes", "no"])
+        favc = st.selectbox("Consome alimentos calóricos?", ["yes", "no"])
 
-    # outros hábitos
+    # valores padrão (compatíveis com modelo)
     ncp = 3
     caec = "Sometimes"
     smoke = "no"
@@ -474,14 +474,17 @@ elif page == "Calculadora":
     calc = "Sometimes"
     mtrans = "Public_Transportation"
 
+    # =========================
+    # IMC
+    # =========================
     imc = peso / (altura ** 2)
     st.metric("📊 Seu IMC", round(imc, 2))
 
     if st.button("🔍 Analisar"):
 
-        # =========================================================
+        # =========================
         # INPUT MODELO
-        # =========================================================
+        # =========================
         input_dict = {
             "Gender": genero,
             "Age": idade,
@@ -501,7 +504,7 @@ elif page == "Calculadora":
 
         input_df = pd.DataFrame([input_dict])
 
-        # encoder
+        # aplicar encoders
         for col, enc in encoders.items():
             if col in input_df.columns:
                 input_df[col] = enc.transform(input_df[col])
@@ -510,9 +513,9 @@ elif page == "Calculadora":
 
         pred = model.predict(input_df)[0]
 
-        # =========================================================
-        # TRADUÇÃO DO RESULTADO
-        # =========================================================
+        # =========================
+        # TRADUÇÃO RESULTADO
+        # =========================
         labels_map = {
             "Insufficient_Weight": "Abaixo do peso",
             "Normal_Weight": "Peso normal",
@@ -529,9 +532,9 @@ elif page == "Calculadora":
 
         st.divider()
 
-        # =========================================================
-        # DIAGNÓSTICO
-        # =========================================================
+        # =========================
+        # 🧠 DIAGNÓSTICO
+        # =========================
         st.subheader("🧠 Diagnóstico do Perfil")
 
         riscos = []
@@ -549,40 +552,93 @@ elif page == "Calculadora":
             riscos.append("Baixo consumo de água")
 
         if favc == "yes":
-            riscos.append("Alto consumo calórico")
+            riscos.append("Alto consumo de alimentos calóricos")
 
         if riscos:
-            st.markdown("🔎 **Fatores de risco identificados:**")
             for r in riscos:
-                st.write(f"- {r}")
+                st.write(f"⚠️ {r}")
         else:
-            st.success("Perfil saudável identificado ✅")
+            st.success("✅ Perfil saudável identificado")
 
         st.divider()
 
-        # =========================================================
-        # PLANO DE EVOLUÇÃO
-        # =========================================================
-        st.subheader("📈 Plano de Evolução Sugerido")
+        # =========================
+        # 📊 ESTADO ATUAL (IMC)
+        # =========================
+        st.subheader("📊 Estado Atual")
+
+        if imc < 18.5:
+            status_imc = "Abaixo do peso"
+        elif imc < 25:
+            status_imc = "Saudável"
+        elif imc < 30:
+            status_imc = "Sobrepeso"
+        else:
+            status_imc = "Obesidade"
+
+        st.write(f"Classificação IMC: **{status_imc}**")
+
+        # =========================
+        # 🎯 PESO IDEAL
+        # =========================
+        st.subheader("🎯 Faixa de Peso Ideal")
+
+        peso_min = 18.5 * (altura ** 2)
+        peso_max = 24.9 * (altura ** 2)
+
+        st.write(f"Peso ideal mínimo: **{round(peso_min,1)} kg**")
+        st.write(f"Peso ideal máximo: **{round(peso_max,1)} kg**")
+
+        # =========================
+        # 📉 AJUSTE NECESSÁRIO
+        # =========================
+        st.subheader("📉 Ajuste Necessário")
+
+        if peso > peso_max:
+            excesso = peso - peso_max
+            st.warning(f"Você precisa perder cerca de **{round(excesso,1)} kg**")
+
+        elif peso < peso_min:
+            falta = peso_min - peso
+            st.warning(f"Você precisa ganhar cerca de **{round(falta,1)} kg**")
+
+        else:
+            st.success("Você está dentro da faixa ideal ✅")
+
+        st.divider()
+
+        # =========================
+        # 📈 PLANO DE EVOLUÇÃO
+        # =========================
+        st.subheader("📈 Plano de Evolução")
+
+        if peso > peso_max:
+            st.write("🎯 Redução gradual de peso")
+            st.write("📌 Meta saudável: 0.5 a 1 kg por semana")
+
+        elif peso < peso_min:
+            st.write("🎯 Ganho de peso controlado")
+            st.write("📌 Ajustar ingestão calórica")
+
+        else:
+            st.write("🎯 Manutenção do peso atual")
 
         if faf < 1:
-            st.write("✅ Aumentar atividade física para nível moderado")
+            st.write("✅ Aumentar atividade física")
 
         if fcvc < 2:
-            st.write("✅ Aumentar consumo de vegetais diariamente")
+            st.write("✅ Melhorar alimentação")
 
         if ch2o < 2:
-            st.write("✅ Aumentar ingestão de água")
+            st.write("✅ Beber mais água")
 
         if favc == "yes":
-            st.write("✅ Reduzir consumo de alimentos calóricos")
-
-        if imc > 25:
-            st.write("✅ Monitorar peso e ajustar dieta calórica")
+            st.write("✅ Reduzir alimentos calóricos")
 
         st.markdown("""
-        🎯 **Objetivo:**  
-        Melhorar indicadores comportamentais para reduzir o risco de obesidade ao longo do tempo.
+        ---
+        🎯 **Resumo:**  
+        Ajustes no comportamento e hábitos são fundamentais para evolução da saúde.
         """)
 # =========================================================
 # RECOMENDAÇÕES
