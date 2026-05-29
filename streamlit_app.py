@@ -441,7 +441,149 @@ elif page == "Dashboard":
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
 
     st.pyplot(fig)
+# =========================================================
+# CALCULADORA
+# =========================================================
+elif page == "Calculadora":
 
+    st.title("🧠 Simulador Inteligente de Obesidade")
+
+    # =========================================================
+    # INPUTS (ORGANIZADOS)
+    # =========================================================
+    col1, col2 = st.columns(2)
+
+    with col1:
+        idade = st.slider("Idade", 10, 80, 25)
+        altura = st.number_input("Altura (m)", 1.4, 2.2, 1.70)
+        peso = st.number_input("Peso (kg)", 40, 200, 70)
+        genero = st.selectbox("Gênero", ["Male", "Female"])
+
+    with col2:
+        faf = st.slider("Atividade Física (0=baixa | 3=alta)", 0, 3, 1)
+        fcvc = st.slider("Consumo de Vegetais (1=baixo | 3=alto)", 1, 3, 2)
+        ch2o = st.slider("Consumo de Água (1=baixo | 3=alto)", 1, 3, 2)
+        favc = st.selectbox("Alimentos calóricos frequentes?", ["yes", "no"])
+
+    # outros hábitos
+    ncp = 3
+    caec = "Sometimes"
+    smoke = "no"
+    scc = "no"
+    tue = 1
+    calc = "Sometimes"
+    mtrans = "Public_Transportation"
+
+    imc = peso / (altura ** 2)
+    st.metric("📊 Seu IMC", round(imc, 2))
+
+    if st.button("🔍 Analisar"):
+
+        # =========================================================
+        # INPUT MODELO
+        # =========================================================
+        input_dict = {
+            "Gender": genero,
+            "Age": idade,
+            "FAVC": favc,
+            "FCVC": fcvc,
+            "NCP": ncp,
+            "CAEC": caec,
+            "SMOKE": smoke,
+            "CH2O": ch2o,
+            "SCC": scc,
+            "FAF": faf,
+            "TUE": tue,
+            "CALC": calc,
+            "MTRANS": mtrans,
+            "IMC": imc
+        }
+
+        input_df = pd.DataFrame([input_dict])
+
+        # encoder
+        for col, enc in encoders.items():
+            if col in input_df.columns:
+                input_df[col] = enc.transform(input_df[col])
+
+        input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+
+        pred = model.predict(input_df)[0]
+
+        # =========================================================
+        # TRADUÇÃO DO RESULTADO
+        # =========================================================
+        labels_map = {
+            "Insufficient_Weight": "Abaixo do peso",
+            "Normal_Weight": "Peso normal",
+            "Overweight_Level_I": "Sobrepeso I",
+            "Overweight_Level_II": "Sobrepeso II",
+            "Obesity_Type_I": "Obesidade I",
+            "Obesity_Type_II": "Obesidade II",
+            "Obesity_Type_III": "Obesidade III",
+        }
+
+        resultado = labels_map.get(pred, pred)
+
+        st.subheader(f"🏥 Classificação: {resultado}")
+
+        st.divider()
+
+        # =========================================================
+        # DIAGNÓSTICO
+        # =========================================================
+        st.subheader("🧠 Diagnóstico do Perfil")
+
+        riscos = []
+
+        if imc > 25:
+            riscos.append("IMC elevado")
+
+        if faf < 1:
+            riscos.append("Baixa atividade física")
+
+        if fcvc < 2:
+            riscos.append("Baixo consumo de vegetais")
+
+        if ch2o < 2:
+            riscos.append("Baixo consumo de água")
+
+        if favc == "yes":
+            riscos.append("Alto consumo calórico")
+
+        if riscos:
+            st.markdown("🔎 **Fatores de risco identificados:**")
+            for r in riscos:
+                st.write(f"- {r}")
+        else:
+            st.success("Perfil saudável identificado ✅")
+
+        st.divider()
+
+        # =========================================================
+        # PLANO DE EVOLUÇÃO
+        # =========================================================
+        st.subheader("📈 Plano de Evolução Sugerido")
+
+        if faf < 1:
+            st.write("✅ Aumentar atividade física para nível moderado")
+
+        if fcvc < 2:
+            st.write("✅ Aumentar consumo de vegetais diariamente")
+
+        if ch2o < 2:
+            st.write("✅ Aumentar ingestão de água")
+
+        if favc == "yes":
+            st.write("✅ Reduzir consumo de alimentos calóricos")
+
+        if imc > 25:
+            st.write("✅ Monitorar peso e ajustar dieta calórica")
+
+        st.markdown("""
+        🎯 **Objetivo:**  
+        Melhorar indicadores comportamentais para reduzir o risco de obesidade ao longo do tempo.
+        """)
 # =========================================================
 # RECOMENDAÇÕES
 # =========================================================
