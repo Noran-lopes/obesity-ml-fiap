@@ -14,34 +14,45 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Obesity Analytics", layout="wide")
 
 # =========================================================
-# 📊 MENU
+# 📊 MENU (ORDEM CORRIGIDA)
 # =========================================================
+st.sidebar.markdown("""
+### 🧠 Fluxo Analítico
+
+1. Exploração dos dados  
+2. Análise e modelagem  
+3. Dashboard executivo  
+4. Simulação  
+5. Recomendações  
+""")
+
 page = st.sidebar.radio(
     "📊 Navegação",
     [
-        "📊 Dashboard Executivo",
         "📁 Exploração dos Dados",
         "📊 Análise + Modelagem",
+        "📊 Dashboard Executivo",
         "🧠 Calculadora Inteligente",
         "💡 Recomendações Estratégicas"
     ]
 )
 
 # =========================================================
-# 📁 LOAD DATA (ROBUSTO)
+# 📁 LOAD DATA (SUPER ROBUSTO)
 # =========================================================
 @st.cache_data
 def load_data():
     df = pd.read_csv("Obesity.csv")
 
-    # Padronizar nomes
+    # limpar nomes
     df.columns = df.columns.str.strip()
 
-    # Corrigir nome da variável alvo
-    if "NObeyesdad" in df.columns:
-        df.rename(columns={"NObeyesdad": "Obesity_level"}, inplace=True)
+    # detectar coluna target automaticamente
+    for col in df.columns:
+        if col.lower() in ["nobeyesdad", "obesity_level"]:
+            df.rename(columns={col: "Obesity_level"}, inplace=True)
 
-    # Criar IMC
+    # criar IMC
     if "Weight" in df.columns and "Height" in df.columns:
         df["IMC"] = df["Weight"] / (df["Height"] ** 2)
 
@@ -60,70 +71,30 @@ except:
     model_loaded = False
 
 # =========================================================
-# 📊 DASHBOARD EXECUTIVO
+# 📁 EXPLORAÇÃO DOS DADOS (PRIMEIRO)
 # =========================================================
-if page == "📊 Dashboard Executivo":
+if page == "📁 Exploração dos Dados":
 
-    st.title("📊 Dashboard Executivo de Obesidade")
+    st.title("📁 Exploração dos Dados")
 
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("Total de Registros", len(df))
-    col2.metric("Idade Média", round(df["Age"].mean(), 1) if "Age" in df.columns else "-")
-    col3.metric("IMC Médio", round(df["IMC"].mean(), 1) if "IMC" in df.columns else "-")
-
-    st.divider()
-
-    if "Obesity_level" in df.columns:
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-            st.subheader("Distribuição dos Níveis de Obesidade")
-            fig, ax = plt.subplots()
-            df["Obesity_level"].value_counts().plot(kind="bar", ax=ax)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-
-        with c2:
-            if "IMC" in df.columns:
-                st.subheader("IMC por Classe")
-                fig, ax = plt.subplots()
-                sns.boxplot(data=df, x="Obesity_level", y="IMC", ax=ax)
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
-
-    else:
-        st.error("Coluna Obesity_level não encontrada")
-
-    st.markdown("""
-    ### 🧠 Insight Executivo
-    - O IMC separa bem os níveis de obesidade  
-    - Há forte influência de comportamento nos casos mais críticos  
-    - Classes intermediárias são mais difíceis de distinguir  
-    """)
-
-# =========================================================
-# 📁 EXPLORAÇÃO DOS DADOS
-# =========================================================
-elif page == "📁 Exploração dos Dados":
-
-    st.title("📁 Entendimento dos Dados")
-
-    st.subheader("📌 Amostra")
+    st.subheader("Visão inicial")
     st.write(df.head())
 
-    st.subheader("🧱 Estrutura")
+    st.subheader("Estrutura das variáveis")
     st.write(df.dtypes)
 
-    st.subheader("📊 Estatísticas")
+    st.subheader("Estatísticas descritivas")
     st.write(df.describe())
 
     st.markdown("""
-    ### 🧠 Leitura de Negócio
+    ### 🧠 Interpretação
 
-    A base integra dados físicos, comportamentais e demográficos,
-    permitindo identificar padrões associados ao risco de obesidade.
+    A base contém variáveis:
+    - Físicas (IMC, peso, altura)
+    - Demográficas (idade, gênero)
+    - Comportamentais (alimentação, atividade física, hábitos)
+
+    Esses dados permitem identificar padrões associados ao risco de obesidade.
     """)
 
 # =========================================================
@@ -144,38 +115,79 @@ elif page == "📊 Análise + Modelagem":
         st.markdown("""
         ### 🔎 Principais Insights
 
-        - IMC é o maior preditor de obesidade  
-        - Baixa atividade física aumenta risco  
-        - Alimentação saudável reduz progressão  
+        - IMC é o principal indicador de obesidade  
+        - Atividade física reduz risco  
+        - Alimentação impacta diretamente  
 
-        ### 🎯 Interpretação Prescritiva
+        ### 🎯 Visão Prescritiva
 
-        - Incentivar atividade física é chave  
-        - Ajustar alimentação tem alto impacto  
-        - Intervenções comportamentais funcionam  
+        - Incentivar exercícios reduz obesidade  
+        - Melhorar dieta é essencial  
+        - Mudança de hábitos = maior impacto  
         """)
 
     else:
-        st.warning("Dados insuficientes para análise")
+        st.error("Coluna Obesity_level não encontrada")
 
     st.subheader("🤖 Modelagem")
 
     st.markdown("""
-    ### 📌 Pipeline
-
-    - Criação do IMC  
-    - Remoção de Height e Weight  
+    **Pipeline:**
+    - Criação de IMC  
+    - Remoção de variáveis redundantes  
     - Encoding  
-    - Treino/Teste (80/20)  
+    - Train/Test 80/20  
     - Random Forest  
 
-    ### ✅ Resultado
+    **Resultado:**
+    - Acurácia ~97%
 
-    - Acurácia: ~97%  
+    **Limitação:**
+    Forte dependência do IMC  
+    """)
 
-    ### ⚠️ Limitação
+# =========================================================
+# 📊 DASHBOARD EXECUTIVO (DEPOIS DA ANÁLISE)
+# =========================================================
+elif page == "📊 Dashboard Executivo":
 
-    Dependência forte do IMC  
+    st.title("📊 Dashboard Executivo de Obesidade")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Total de Registros", len(df))
+    col2.metric("Idade Média", round(df["Age"].mean(), 1))
+    col3.metric("IMC Médio", round(df["IMC"].mean(), 1))
+
+    st.divider()
+
+    if "Obesity_level" in df.columns:
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            st.subheader("Distribuição dos Níveis de Obesidade")
+            fig, ax = plt.subplots()
+            df["Obesity_level"].value_counts().plot(kind="bar", ax=ax)
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+
+        with c2:
+            st.subheader("IMC por Classe")
+            fig, ax = plt.subplots()
+            sns.boxplot(data=df, x="Obesity_level", y="IMC", ax=ax)
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+
+    else:
+        st.error("Coluna Obesity_level não encontrada")
+
+    st.markdown("""
+    ### 🧠 Insight Executivo
+
+    - IMC explica bem os níveis de obesidade  
+    - Há forte impacto comportamental  
+    - Classes intermediárias são mais difíceis  
     """)
 
 # =========================================================
@@ -183,7 +195,7 @@ elif page == "📊 Análise + Modelagem":
 # =========================================================
 elif page == "🧠 Calculadora Inteligente":
 
-    st.title("🧠 Simulação Inteligente")
+    st.title("🧠 Simulador de Obesidade")
 
     idade = st.slider("Idade", 10, 80, 25)
     altura = st.number_input("Altura (m)", 1.4, 2.2, 1.70)
@@ -194,9 +206,10 @@ elif page == "🧠 Calculadora Inteligente":
     agua = st.slider("Consumo de Água", 1, 3, 2)
 
     imc = peso / (altura ** 2)
+
     st.metric("IMC", round(imc, 2))
 
-    if st.button("🔍 Analisar"):
+    if st.button("Analisar"):
 
         if imc < 18.5:
             nivel = "Abaixo do peso"
@@ -221,7 +234,7 @@ elif page == "🧠 Calculadora Inteligente":
             recomendacoes.append("Aumentar ingestão de água")
 
         if imc > 25:
-            recomendacoes.append("Reduzir ingestão calórica")
+            recomendacoes.append("Reduzir consumo calórico")
 
         st.subheader("Plano de Evolução")
 
@@ -236,19 +249,19 @@ else:
     st.title("💡 Recomendações Estratégicas")
 
     st.markdown("""
-    ### 🎯 Fatores de Risco
+    ### 🎯 Principais Fatores
 
     - Sedentarismo  
-    - Consumo calórico elevado  
-    - Baixa qualidade alimentar  
+    - Alimentação inadequada  
+    - Baixo consumo de água  
 
-    ### 📊 Ações Recomendadas
+    ### 📊 Ações
 
-    1. Programas de atividade física  
+    1. Incentivo à atividade física  
     2. Educação nutricional  
-    3. Acompanhamento contínuo  
+    3. Monitoramento contínuo  
 
     ### 🧠 Conclusão
 
-    A obesidade pode ser prevista e prevenida com mudanças comportamentais mensuráveis.
+    A obesidade pode ser prevista e reduzida com intervenções comportamentais.
     """)
