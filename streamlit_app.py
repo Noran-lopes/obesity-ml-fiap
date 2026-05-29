@@ -350,7 +350,6 @@ elif page == "Análise + Modelagem":
     🎯 **Conclusão:**
     A obesidade pode ser reduzida com mudanças comportamentais.
     """)
-``
 # =========================================================
 # DASHBOARD EXECUTIVO FINAL
 # =========================================================
