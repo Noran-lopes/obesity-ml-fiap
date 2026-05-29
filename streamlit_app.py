@@ -86,6 +86,7 @@ if st.button("🔍 Prever nível de obesidade"):
     # ENCODING
     # =========================
     for col in encoders:
+    if col in input_dict:
         input_dict[col] = encoders[col].transform([input_dict[col]])[0]
 
     # Mantém ordem igual ao treino
