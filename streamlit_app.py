@@ -296,15 +296,12 @@ elif page == "Análise + Modelagem":
 # =========================================================
 # DASHBOARD
 # =========================================================
-# =========================================================
-# DASHBOARD
-# =========================================================
 elif page == "Dashboard":
 
     st.title("📊 Dashboard Executivo")
 
     # =========================
-    # 📌 KPIs
+    # KPIs
     # =========================
     col1, col2, col3 = st.columns(3)
 
@@ -315,38 +312,71 @@ elif page == "Dashboard":
     st.divider()
 
     # =========================
-    # 📊 GRÁFICOS
+    # 🔥 ORDEM DAS CLASSES
+    # =========================
+    ordem = [
+        "Insufficient_Weight",
+        "Normal_Weight",
+        "Overweight_Level_I",
+        "Overweight_Level_II",
+        "Obesity_Type_I",
+        "Obesity_Type_II",
+        "Obesity_Type_III"
+    ]
+
+    labels_pt = [
+        "Abaixo peso",
+        "Normal",
+        "Sobrepeso I",
+        "Sobrepeso II",
+        "Obesidade I",
+        "Obesidade II",
+        "Obesidade III"
+    ]
+
+    # =========================
+    # LINHA 1
     # =========================
     col1, col2 = st.columns(2)
 
-    # 🔹 Distribuição de obesidade
     with col1:
         st.subheader("Distribuição de Obesidade")
 
         if "Obesity_level" in df.columns:
+            df_plot = df.copy()
+
+            df_plot["Obesity_level"] = pd.Categorical(
+                df_plot["Obesity_level"],
+                categories=ordem,
+                ordered=True
+            )
+
+            contagem = df_plot["Obesity_level"].value_counts().sort_index()
+
             fig, ax = plt.subplots()
-            df["Obesity_level"].value_counts().plot(kind="bar", ax=ax)
-            plt.xticks(rotation=45)
+            contagem.plot(kind="bar", ax=ax)
+
+            ax.set_xticklabels(labels_pt, rotation=45)
+            ax.set_ylabel("Quantidade")
+
             st.pyplot(fig)
 
-    # 🔹 IMC por classe
     with col2:
         st.subheader("IMC por Classe")
 
-        if "Obesity_level" in df.columns:
-            fig, ax = plt.subplots()
-            sns.boxplot(data=df, x="Obesity_level", y="IMC", ax=ax)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+        fig, ax = plt.subplots()
+        sns.boxplot(data=df_plot, x="Obesity_level", y="IMC", order=ordem, ax=ax)
+
+        ax.set_xticklabels(labels_pt, rotation=45)
+        st.pyplot(fig)
 
     st.divider()
 
     # =========================
-    # 📊 SEGUNDA LINHA
+    # LINHA 2
     # =========================
     col1, col2 = st.columns(2)
 
-    # 🔹 Idade
     with col1:
         st.subheader("Distribuição de Idade")
 
@@ -356,118 +386,61 @@ elif page == "Dashboard":
         ax.set_ylabel("Quantidade")
         st.pyplot(fig)
 
-    # 🔹 IMC geral
     with col2:
         st.subheader("Distribuição do IMC")
 
         fig, ax = plt.subplots()
         df["IMC"].hist(bins=20, ax=ax)
         ax.set_xlabel("IMC")
-        ax.set_ylabel("Quantidade")
         st.pyplot(fig)
 
     st.divider()
 
     # =========================
-    # 📊 TERCEIRA LINHA (COMPORTAMENTAL)
+    # 🔥 LINHA 3 (CORRIGIDA)
     # =========================
     col1, col2 = st.columns(2)
 
-    # 🔹 Atividade física
     with col1:
         st.subheader("Atividade Física (FAF)")
 
+        ordem_faf = sorted(df["FAF"].unique())
+
         fig, ax = plt.subplots()
-        df["FAF"].value_counts().plot(kind="bar", ax=ax)
-        ax.set_xlabel("Nível")
+        df["FAF"].value_counts().sort_index().plot(kind="bar", ax=ax)
+
+        ax.set_xlabel("Nível de Atividade (0 = baixo | 3 = alto)")
         ax.set_ylabel("Quantidade")
+
         st.pyplot(fig)
 
-    # 🔹 Consumo de vegetais
     with col2:
         st.subheader("Consumo de Vegetais (FCVC)")
 
+        ordem_fcvc = sorted(df["FCVC"].unique())
+
         fig, ax = plt.subplots()
-        df["FCVC"].value_counts().plot(kind="bar", ax=ax)
-        ax.set_xlabel("Nível")
+        df["FCVC"].value_counts().sort_index().plot(kind="bar", ax=ax)
+
+        ax.set_xlabel("Frequência (1 = baixo | 3 = alto)")
         ax.set_ylabel("Quantidade")
+
         st.pyplot(fig)
 
     st.divider()
 
     # =========================
-    # 📊 QUARTA LINHA (CORRELAÇÃO SIMPLES)
+    # LINHA 4
     # =========================
-    st.subheader("Correlação entre variáveis numéricas")
+    st.subheader("Correlação entre Variáveis")
 
     fig, ax = plt.subplots()
+
     corr = df[["Age", "IMC", "FAF", "FCVC", "CH2O"]].corr()
+
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
 
     st.pyplot(fig)
-
-# =========================================================
-# CALCULADORA (MODELO REAL ✅🔥)
-# =========================================================
-elif page == "Calculadora":
-
-    st.title("🧠 Predição com Machine Learning")
-
-    idade = st.slider("Idade", 10, 80, 25)
-    altura = st.number_input("Altura (m)", 1.4, 2.2, 1.7)
-    peso = st.number_input("Peso (kg)", 40, 200, 70)
-
-    genero = st.selectbox("Gênero", ["Male", "Female"])
-    favc = st.selectbox("Consome alimentos calóricos?", ["yes", "no"])
-    fcvc = st.slider("Consumo de vegetais", 1, 3, 2)
-    ncp = st.slider("Refeições diárias", 1, 4, 3)
-    caec = st.selectbox("Lanches", ["no", "Sometimes", "Frequently", "Always"])
-    smoke = st.selectbox("Fumante", ["yes", "no"])
-    ch2o = st.slider("Água", 1, 3, 2)
-    scc = st.selectbox("Monitora calorias?", ["yes", "no"])
-    faf = st.slider("Atividade física", 0, 3, 1)
-    tue = st.slider("Uso tecnologia", 0, 2, 1)
-    calc = st.selectbox("Álcool", ["no", "Sometimes", "Frequently", "Always"])
-    mtrans = st.selectbox("Transporte", ["Public_Transportation", "Walking", "Automobile", "Motorbike", "Bike"])
-
-    imc = peso / (altura ** 2)
-    st.metric("IMC", round(imc, 2))
-
-    if st.button("🔍 Prever"):
-
-        input_dict = {
-            "Gender": genero,
-            "Age": idade,
-            "FAVC": favc,
-            "FCVC": fcvc,
-            "NCP": ncp,
-            "CAEC": caec,
-            "SMOKE": smoke,
-            "CH2O": ch2o,
-            "SCC": scc,
-            "FAF": faf,
-            "TUE": tue,
-            "CALC": calc,
-            "MTRANS": mtrans,
-            "IMC": imc
-        }
-
-        input_df = pd.DataFrame([input_dict])
-
-        # aplicar encoders
-        for col, enc in encoders.items():
-            if col in input_df.columns:
-                try:
-                    input_df[col] = enc.transform(input_df[col])
-                except:
-                    input_df[col] = enc.transform([enc.classes_[0]])
-
-        # ✅ LINHA MAIS IMPORTANTE (resolve o erro!)
-        input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
-
-        pred = model.predict(input_df)[0]
-
-        st.success(f"🏥 Classificação: {pred}")
 
 # =========================================================
 # RECOMENDAÇÕES
