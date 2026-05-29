@@ -28,17 +28,17 @@ age = st.slider("Idade", 10, 80)
 family_history = st.selectbox("Histórico familiar de obesidade", ["yes", "no"])
 favc = st.selectbox("Consome alimentos calóricos com frequência?", ["yes", "no"])
 
-fcvc = st.slider("Consumo de vegetais (1 baixa — 3 alta)", 1.0, 3.0)
-ncp = st.slider("Número de refeições diárias", 1.0, 5.0)
+fcvc = st.slider("Consumo de vegetais (1 baixa — 3 alta)", 1, 3)
+ncp = st.slider("Número de refeições diárias", 1, 5)
 
 caec = st.selectbox("Lanches entre refeições", ["no", "Sometimes", "Frequently", "Always"])
 smoke = st.selectbox("Fuma?", ["yes", "no"])
 
-ch2o = st.slider("Consumo diário de água (litros)", 1.0, 3.0)
+ch2o = st.slider("Consumo diário de água (litros)", 1, 3)
 scc = st.selectbox("Controla calorias?", ["yes", "no"])
 
-faf = st.slider("Frequência de atividade física (dias/semana)", 0.0, 5.0)
-tue = st.slider("Tempo de uso de tecnologia (horas/dia)", 0.0, 10.0)
+faf = st.slider("Atividade física (dias/semana)", 0, 7)
+tue = st.slider("Tempo de uso de tecnologia (horas/dia)", 0, 12)
 
 calc = st.selectbox("Consumo de álcool", ["no", "Sometimes", "Frequently", "Always"])
 
@@ -83,13 +83,12 @@ if st.button("🔍 Prever nível de obesidade"):
     }
 
     # =========================
-    # ENCODING
+    # ENCODING ✅ corrigido
     # =========================
     for col in encoders:
         if col in input_dict:
-        input_dict[col] = encoders[col].transform([input_dict[col]])[0]
+            input_dict[col] = encoders[col].transform([input_dict[col]])[0]
 
-    # Mantém ordem igual ao treino
     input_array = np.array(list(input_dict.values())).reshape(1, -1)
 
     # =========================
