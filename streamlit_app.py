@@ -24,7 +24,7 @@ page = st.sidebar.radio(
 )
 
 # =========================
-# LOAD
+# LOAD MODEL
 # =========================
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
@@ -37,140 +37,170 @@ def load_data():
 
 df = load_data()
 
-# =========================
-# 0️⃣ APRESENTAÇÃO DOS DADOS
-# =========================
+# =========================================================
+# 📁 APRESENTAÇÃO DOS DADOS (DATA UNDERSTANDING)
+# =========================================================
 if page == "📁 Apresentação dos Dados":
 
     st.title("📁 Apresentação do Dataset")
 
     st.subheader("📊 Visão geral")
-    st.write(f"🔢 Registros: {df.shape[0]}")
-    st.write(f"📊 Variáveis: {df.shape[1]}")
+    st.write(f"🔢 Registros: **{df.shape[0]}**")
+    st.write(f"📊 Variáveis: **{df.shape[1]}**")
+
     st.dataframe(df.head())
 
-    st.subheader("📌 Tipos de Dados")
+    # Tipos
+    st.subheader("📌 Tipos de dados")
     tipos = df.dtypes.reset_index()
     tipos.columns = ["Variável", "Tipo"]
     st.dataframe(tipos)
 
-    st.subheader("📊 Classificação")
-
     st.markdown("""
-### 🔢 Quantitativos:
-- Age
-- Height
-- Weight
-- FCVC, NCP, CH2O, FAF, TUE
+### 📊 Classificação
 
-### 🔤 Qualitativos:
-- Gender
-- family_history
-- FAVC
-- CAEC
-- SMOKE
-- SCC
-- CALC
-- MTRANS
-- Obesity (target)
+**Quantitativos:**
+- Age, Height, Weight, FCVC, NCP, CH2O, FAF, TUE
+
+**Qualitativos:**
+- Gender, family_history, FAVC, CAEC, SMOKE, SCC, CALC, MTRANS, Obesity
 """)
 
-    st.subheader("🧠 Descrição das Variáveis")
-
-    st.markdown("""
-- **Age / Height / Weight** → dados físicos  
-- **FAVC / FCVC / CAEC** → hábitos alimentares  
-- **FAF / TUE** → estilo de vida  
-- **SMOKE / CALC** → hábitos adicionais  
-- **MTRANS** → mobilidade  
-- **Obesity** → nível de obesidade (alvo)
-""")
-
-    st.subheader("📊 Estatística Descritiva")
+    # Estatística descritiva
+    st.subheader("📊 Estatística descritiva")
     st.write(df.describe())
 
-    st.subheader("📋 Variáveis Categóricas")
+    # Distribuição de numéricos
+    st.subheader("📉 Distribuição das variáveis numéricas")
+
+    numeric_cols = df.select_dtypes(include=np.number).columns
+
+    for col in numeric_cols:
+        fig, ax = plt.subplots()
+        sns.histplot(df[col], kde=True, ax=ax)
+        ax.set_title(col)
+        st.pyplot(fig)
+
+    # Frequência categóricos
+    st.subheader("📋 Variáveis categóricas")
 
     for col in df.select_dtypes(include="object").columns:
-        with st.expander(f"{col}"):
-            st.write(df[col].value_counts())
+        fig, ax = plt.subplots()
+        sns.countplot(x=col, data=df, ax=ax)
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
 
     st.success("""
-✅ Dataset completo combinando fatores físicos e comportamentais  
-✅ Ideal para análise e modelagem de obesidade  
+✅ Dataset contém variáveis físicas + comportamentais  
+✅ Permite análise multidimensional da obesidade  
 """)
 
-# =========================
-# 1️⃣ ANÁLISE DOS DADOS
-# =========================
+# =========================================================
+# 📊 ANÁLISE DOS DADOS + PIPELINE
+# =========================================================
 elif page == "📊 Análise dos Dados":
 
-    st.title("📊 Análise Estratégica da Obesidade")
+    st.title("📊 Análise Estratégica e Modelagem")
 
-    # DISTRIBUIÇÃO
-    st.subheader("📊 Distribuição")
+    # 1. DISTRIBUIÇÃO
+    st.header("📊 1. Distribuição do Target")
+
     fig, ax = plt.subplots()
     sns.countplot(x="Obesity", data=df, ax=ax)
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    st.info("Distribuição equilibrada permite análise robusta.")
+    st.info("Distribuição equilibrada → modelo mais robusto")
+
+    # 2. RELAÇÕES
+    st.header("⚖️ 2. Variáveis-chave")
 
     # IMC
-    st.subheader("⚖️ IMC vs Obesidade")
     fig2, ax2 = plt.subplots()
     sns.boxplot(x="Obesity", y="IMC", data=df, ax=ax2)
     plt.xticks(rotation=45)
     st.pyplot(fig2)
 
-    st.info("IMC é o principal fator explicativo.")
-
-    # ATIVIDADE
-    st.subheader("🏃 Atividade Física")
+    # Atividade
     fig3, ax3 = plt.subplots()
     sns.boxplot(x="Obesity", y="FAF", data=df, ax=ax3)
     plt.xticks(rotation=45)
     st.pyplot(fig3)
 
-    st.info("Sedentarismo aumenta obesidade.")
-
-    # ALIMENTAÇÃO
-    st.subheader("🍔 Alimentação")
+    # Alimentação
     fig4, ax4 = plt.subplots()
     sns.countplot(x="FAVC", hue="Obesity", data=df, ax=ax4)
     st.pyplot(fig4)
 
-    st.info("Alimentos calóricos impactam diretamente.")
-
     st.success("""
-🔍 Conclusão:
-- IMC é determinante
-- Sedentarismo é crítico
-- Alimentação impacta diretamente
+🔍 Insights:
+- IMC é principal driver
+- Sedentarismo impacta obesidade
+- Alimentação calórica influencia diretamente
 """)
 
-# =========================
-# 2️⃣ CALCULADORA
-# =========================
+    # 3. PREPARAÇÃO
+    st.header("🛠️ 3. Preparação dos dados")
+
+    st.markdown("""
+- Criação do IMC  
+- Remoção de Weight e Height  
+- Encoding das variáveis categóricas  
+- Split treino/teste  
+
+🎯 Objetivo: evitar data leakage e melhorar generalização
+""")
+
+    # 4. MODELAGEM
+    st.header("🤖 4. Modelagem")
+
+    st.markdown("""
+Algoritmo: Random Forest  
+
+✔ Captura relações complexas  
+✔ Funciona bem com dados mistos  
+✔ Alta precisão em classificação  
+""")
+
+    # 5. RESULTADO
+    st.header("📈 5. Resultado")
+
+    st.success("✅ Accuracy final: **97%**")
+
+    st.markdown("""
+Inicialmente: ~99% → identificado data leakage  
+
+Após correção: ~97%  
+
+✔ Modelo confiável  
+✔ Generalização real  
+✔ Aplicável em cenário real  
+""")
+
+# =========================================================
+# 🧠 CALCULADORA
+# =========================================================
 elif page == "🧠 Calculadora":
 
-    st.title("🧠 Calculadora de Obesidade")
+    st.title("🧠 Predição de Obesidade")
 
     gender = st.selectbox("Gênero", ["Male", "Female"])
     age = st.slider("Idade", 10, 80)
+
     family_history = st.selectbox("Histórico familiar", ["yes", "no"])
-    favc = st.selectbox("Calorias frequentes?", ["yes", "no"])
+    favc = st.selectbox("Comida calórica frequente?", ["yes", "no"])
 
     fcvc = st.slider("Vegetais", 1, 3)
     ncp = st.slider("Refeições", 1, 5)
-    caec = st.selectbox("Lanches (doces/fast food)", ["no", "Sometimes", "Frequently", "Always"])
 
+    caec = st.selectbox("Lanches (doces, fast-food)", ["no", "Sometimes", "Frequently", "Always"])
     smoke = st.selectbox("Fuma?", ["yes", "no"])
+
     ch2o = st.slider("Água (L)", 1, 5)
     scc = st.selectbox("Controla calorias?", ["yes", "no"])
 
     faf = st.slider("Atividade física", 0, 7)
-    tue = st.slider("Tecnologia", 0, 24)
+    tue = st.slider("Tecnologia (h)", 0, 24)
 
     calc = st.selectbox("Álcool", ["no", "Sometimes", "Frequently", "Always"])
     mtrans = st.selectbox("Transporte", ["Walking", "Bike", "Public_Transportation", "Automobile", "Motorbike"])
@@ -206,34 +236,32 @@ elif page == "🧠 Calculadora":
                 input_dict[col] = encoders[col].transform([input_dict[col]])[0]
 
         input_array = np.array(list(input_dict.values())).reshape(1, -1)
+
         pred = int(model.predict(input_array)[0])
 
         labels = [
-            "Abaixo do peso", "Normal", "Sobrepeso I",
-            "Sobrepeso II", "Obesidade I",
-            "Obesidade II", "Obesidade III"
+            "Abaixo do peso",
+            "Normal",
+            "Sobrepeso I",
+            "Sobrepeso II",
+            "Obesidade I",
+            "Obesidade II",
+            "Obesidade III"
         ]
 
         st.success(f"✅ Resultado: {labels[pred]}")
 
-        if pred <= 1:
-            st.info("🟢 Saudável")
-        elif pred <= 3:
-            st.warning("🟡 Atenção")
-        else:
-            st.error("🔴 Risco")
-
         st.progress((pred + 1) / 7)
 
-# =========================
-# 3️⃣ RECOMENDAÇÕES
-# =========================
+# =========================================================
+# 💡 RECOMENDAÇÕES
+# =========================================================
 else:
 
     st.title("💡 Recomendações")
 
     st.success("✅ Pratique atividade física regularmente")
     st.warning("⚠️ Reduza alimentos ultraprocessados")
-    st.error("🚨 Procure orientação médica se necessário")
+    st.error("🚨 Procure acompanhamento médico se necessário")
 
     st.info("📚 Baseado em padrões dos dados e OMS")
