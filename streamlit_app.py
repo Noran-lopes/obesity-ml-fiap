@@ -136,116 +136,163 @@ elif page == "Análise + Modelagem":
     st.title("📊 Análise + Modelagem")
 
     # =========================================================
-    # 📊 1. ANÁLISE DESCRITIVA
+    # 🔥 ORDEM CORRETA DAS CLASSES
     # =========================================================
-    st.subheader("1️⃣ Análise Descritiva")
+    ordem = [
+        "Insufficient_Weight",
+        "Normal_Weight",
+        "Overweight_Level_I",
+        "Overweight_Level_II",
+        "Obesity_Type_I",
+        "Obesity_Type_II",
+        "Obesity_Type_III"
+    ]
 
-    st.markdown("""
-    A análise descritiva tem como objetivo entender a distribuição dos dados e identificar padrões iniciais.
-    """)
+    labels_pt = [
+        "Abaixo do peso",
+        "Peso normal",
+        "Sobrepeso I",
+        "Sobrepeso II",
+        "Obesidade I",
+        "Obesidade II",
+        "Obesidade III"
+    ]
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write("Distribuição da Idade")
-        fig, ax = plt.subplots()
-        df["Age"].hist(bins=20, ax=ax)
-        st.pyplot(fig)
-
-    with col2:
-        st.write("Distribuição do IMC")
-        fig, ax = plt.subplots()
-        df["IMC"].hist(bins=20, ax=ax)
-        st.pyplot(fig)
-
-    st.markdown("""
-    ✅ Observação:
-    - Existe concentração de indivíduos em faixas específicas de idade  
-    - O IMC apresenta variação significativa entre indivíduos  
-    """)
-
-    st.divider()
-
-    # =========================================================
-    # 🔍 2. ANÁLISE DIAGNÓSTICA
-    # =========================================================
-    st.subheader("2️⃣ Análise Diagnóstica")
-
-    st.markdown("""
-    A análise diagnóstica busca entender as causas e relações entre variáveis.
-    """)
+    mapa_labels = dict(zip(ordem, labels_pt))
 
     if "Obesity_level" in df.columns:
 
+        df_plot = df.copy()
+
+        # garantir ordem correta
+        df_plot["Obesity_level"] = pd.Categorical(
+            df_plot["Obesity_level"],
+            categories=ordem,
+            ordered=True
+        )
+
+        # =========================================================
+        # 📊 ANÁLISE DESCRITIVA
+        # =========================================================
+        st.subheader("1️⃣ Distribuição de IMC por Nível de Obesidade")
+
         fig, ax = plt.subplots()
-        sns.boxplot(data=df, x="Obesity_level", y="IMC", ax=ax)
-        plt.xticks(rotation=45)
+        sns.boxplot(
+            data=df_plot,
+            x="Obesity_level",
+            y="IMC",
+            order=ordem,
+            ax=ax
+        )
+
+        ax.set_title("Distribuição do IMC por Classe de Obesidade")
+        ax.set_xlabel("Classificação de Obesidade")
+        ax.set_ylabel("IMC")
+
+        ax.set_xticklabels(labels_pt, rotation=45)
+
         st.pyplot(fig)
 
         st.markdown("""
-        ✅ Insight:
-        - O IMC aumenta conforme o nível de obesidade  
-        - Existe clara separação entre as classes  
+        ✅ **Interpretação:**
+        - Observa-se crescimento consistente do IMC entre as classes  
+        - Há separação clara entre níveis normais e obesidade  
+        - Classes intermediárias apresentam maior sobreposição  
 
-        🎯 Interpretação:
-        O IMC é um forte indicador da condição de obesidade.
+        🎯 **Conclusão:**
+        O IMC é o principal indicador para classificação de obesidade.
         """)
 
-    st.divider()
+        st.divider()
 
-    # =========================================================
-    # 🤖 3. ANÁLISE PREDITIVA
-    # =========================================================
-    st.subheader("3️⃣ Análise Preditiva")
+        # =========================================================
+        # 🔍 ANÁLISE DIAGNÓSTICA
+        # =========================================================
+        st.subheader("2️⃣ Relação entre Idade e IMC")
 
-    st.markdown("""
-    A análise preditiva utiliza modelos de Machine Learning para prever o nível de obesidade com base nas variáveis disponíveis.
-    """)
+        fig, ax = plt.subplots()
 
-    st.markdown("""
-    ✅ Modelo utilizado: Random Forest  
+        sns.scatterplot(
+            data=df_plot,
+            x="Age",
+            y="IMC",
+            hue="Obesity_level",
+            hue_order=ordem,
+            ax=ax
+        )
 
-    ✅ Principais características:
-    - Captura relações não lineares  
-    - Lida bem com múltiplas variáveis  
-    - Reduz overfitting  
+        ax.set_title("Relação entre Idade e IMC por Classe")
+        ax.set_xlabel("Idade")
+        ax.set_ylabel("IMC")
 
-    ✅ Performance:
-    - Acurácia aproximada: ~97%  
+        st.pyplot(fig)
 
-    🎯 Interpretação:
-    O modelo apresenta alta capacidade de prever corretamente os níveis de obesidade.
-    """)
+        st.markdown("""
+        ✅ **Insight:**
+        - A idade apresenta leve tendência de aumento do IMC  
+        - Entretanto, não explica sozinha a obesidade  
 
-    st.divider()
+        🎯 **Conclusão:**
+        A obesidade é multifatorial e depende mais de hábitos do que idade isoladamente.
+        """)
 
-    # =========================================================
-    # 💡 4. ANÁLISE PRESCRITIVA
-    # =========================================================
-    st.subheader("4️⃣ Análise Prescritiva")
+        st.divider()
 
-    st.markdown("""
-    A análise prescritiva utiliza os insights dos dados para sugerir ações concretas.
-    """)
+        # =========================================================
+        # 🤖 ANÁLISE PREDITIVA
+        # =========================================================
+        st.subheader("3️⃣ Modelagem Preditiva")
 
-    st.markdown("""
-    ### 🔍 Principais fatores identificados:
-    - IMC elevado  
-    - Baixa atividade física  
-    - Baixo consumo de vegetais  
-    - Alto consumo calórico  
+        st.markdown("""
+        O modelo foi desenvolvido utilizando Random Forest.
 
-    ### ✅ Recomendações práticas:
+        ✅ **Motivos da escolha:**
+        - Captura relações não lineares  
+        - Robusto a outliers  
+        - Reduz overfitting  
 
-    - Aumentar a frequência de atividade física  
-    - Melhorar a qualidade da alimentação  
-    - Reduzir ingestão de alimentos calóricos  
-    - Aumentar consumo de água  
+        ✅ **Pipeline aplicada:**
+        - Criação do IMC  
+        - Remoção de Height e Weight (evita leakage)  
+        - Encoding de variáveis categóricas  
+        - Split treino/teste (80/20)  
 
-    🎯 Conclusão:
-    A obesidade pode ser prevenida através de mudanças comportamentais mensuráveis.
-    """)
+        ✅ **Performance:**
+        - Acurácia aproximada de 97%  
 
+        🎯 **Interpretação:**
+        O modelo apresenta alta capacidade de generalização.
+        """)
+
+        st.divider()
+
+        # =========================================================
+        # 💡 ANÁLISE PRESCRITIVA
+        # =========================================================
+        st.subheader("4️⃣ Análise Prescritiva")
+
+        st.markdown("""
+        ### 🔍 Fatores principais identificados:
+
+        - IMC elevado  
+        - Baixa atividade física (FAF)  
+        - Baixo consumo de vegetais (FCVC)  
+        - Consumo frequente de alimentos calóricos (FAVC)  
+
+        ### ✅ Recomendações:
+
+        - Aumentar frequência de atividade física  
+        - Melhorar qualidade alimentar  
+        - Reduzir alimentos altamente calóricos  
+        - Aumentar consumo de água  
+
+        🎯 **Conclusão final:**
+
+        A obesidade pode ser significativamente reduzida através de mudanças comportamentais mensuráveis, sendo possível atuar preventivamente com base nos dados.
+        """)
+
+    else:
+        st.error(f"Coluna não encontrada: {df.columns}")
 # =========================================================
 # DASHBOARD
 # =========================================================
