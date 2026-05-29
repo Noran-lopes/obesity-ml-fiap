@@ -128,8 +128,9 @@ if page == "Exploração":
     """)
 
 
+
 # =========================================================
-# ANÁLISE + MODELAGEM FINAL COMPLETA
+# ANÁLISE + MODELAGEM FINAL COMPLETA (SEM ERRO)
 # =========================================================
 elif page == "Análise + Modelagem":
 
@@ -172,31 +173,24 @@ elif page == "Análise + Modelagem":
         )
 
     # =========================================================
-    # 1️⃣ ANÁLISE DESCRITIVA
+    # 1️⃣ DESCRITIVA
     # =========================================================
     st.subheader("1️⃣ Análise Descritiva")
 
     fig, ax = plt.subplots()
     sns.boxplot(data=df_plot, x="Obesity_level", y="IMC", order=ordem, ax=ax)
-
     ax.set_xticklabels(labels_pt, rotation=45)
-    ax.set_ylabel("IMC")
 
     st.pyplot(fig)
 
     st.markdown("""
-    ### 🧠 Interpretação
-
-    O IMC apresenta crescimento progressivo entre os níveis de obesidade.
-
-    🎯 **Conclusão:**
-    O IMC é o principal indicador para classificação.
+    O IMC cresce progressivamente entre os níveis de obesidade, indicando forte capacidade de separação das classes.
     """)
 
     st.divider()
 
     # =========================================================
-    # 2️⃣ ANÁLISE DIAGNÓSTICA
+    # 2️⃣ DIAGNÓSTICA
     # =========================================================
     st.subheader("2️⃣ Análise Diagnóstica")
 
@@ -206,38 +200,32 @@ elif page == "Análise + Modelagem":
     st.pyplot(fig)
 
     st.markdown("""
-    ### 🧠 Interpretação
-
-    A idade apresenta influência limitada no IMC.
-
-    🎯 **Conclusão:**
-    A obesidade é multifatorial.
+    A idade apresenta influência moderada, mas não é determinante isolada — reforçando caráter multifatorial da obesidade.
     """)
 
     st.divider()
 
     # =========================================================
-    # 3️⃣ MODELAGEM PREDITIVA
+    # 3️⃣ MODELAGEM
     # =========================================================
     st.subheader("3️⃣ Modelagem Preditiva")
 
     st.markdown("""
     Modelo utilizado: **Random Forest**
 
-    ✅ Capta relações complexas  
-    ✅ Robusto e estável  
-    ✅ Ideal para classificação  
+    - Captura relações não lineares  
+    - Alta robustez  
+    - Excelente desempenho em classificação  
     """)
 
     # =========================================================
-    # 🔥 RECRIAR PIPELINE (CORREÇÃO DO ERRO)
+    # 🔥 PIPELINE CORRETA
     # =========================================================
     df_model = df.copy()
 
-    # remover variáveis usadas para cálculo
     df_model = df_model.drop(["Weight", "Height"], axis=1)
 
-    # aplicar encoders
+    # encoding completo
     for col, enc in encoders.items():
         if col in df_model.columns:
             df_model[col] = enc.transform(df_model[col])
@@ -245,6 +233,10 @@ elif page == "Análise + Modelagem":
     # separar X e y
     X = df_model.drop("Obesity_level", axis=1)
     y = df_model["Obesity_level"]
+
+    # ✅ CORREÇÃO CRÍTICA (evita erro da matriz!)
+    target_encoder = encoders["Obesity_level"]
+    y = target_encoder.transform(y)
 
     # split
     X_train, X_test, y_train, y_test = train_test_split(
@@ -283,14 +275,11 @@ elif page == "Análise + Modelagem":
     st.pyplot(fig)
 
     st.markdown("""
-    ### 🧠 Interpretação
-
-    - Alta concentração na diagonal (acertos)  
-    - Erros ocorrem entre classes similares  
+    - Alta concentração de acertos na diagonal  
+    - Erros entre classes próximas  
     - Excelente desempenho geral  
 
-    🎯 **Conclusão:**
-    Modelo altamente confiável.
+    ✅ Modelo confiável para classificação.
     """)
 
     st.divider()
@@ -317,39 +306,36 @@ elif page == "Análise + Modelagem":
     st.pyplot(fig)
 
     st.markdown("""
-    ### 🧠 Interpretação
+    - IMC é o fator mais relevante  
+    - Variáveis comportamentais impactam fortemente  
+    - Modelo analisa múltiplas dimensões  
 
-    - IMC é o principal fator  
-    - Hábitos comportamentais têm impacto relevante  
-    - Modelo considera múltiplos fatores  
-
-    🎯 **Conclusão:**
-    A obesidade é multifatorial e depende de comportamento + físico.
+    ✅ A obesidade é multifatorial.
     """)
 
     st.divider()
 
     # =========================================================
-    # 💡 ANÁLISE PRESCRITIVA
+    # 💡 PRESCRITIVA
     # =========================================================
     st.subheader("4️⃣ Análise Prescritiva")
 
     st.markdown("""
-    ### 🔎 Fatores críticos:
+    🔎 Fatores críticos:
 
     - Baixa atividade física  
-    - Alimentação inadequada  
+    - Má alimentação  
     - Alto consumo calórico  
 
-    ### ✅ Recomendações:
+    ✅ Recomendações:
 
     - Aumentar atividade física  
     - Melhorar alimentação  
     - Reduzir calorias  
 
-    🎯 **Conclusão:**
-    A obesidade pode ser reduzida com mudanças comportamentais.
+    🎯 A obesidade pode ser reduzida com mudanças comportamentais.
     """)
+
 # =========================================================
 # DASHBOARD EXECUTIVO FINAL
 # =========================================================
