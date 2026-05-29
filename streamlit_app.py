@@ -56,6 +56,7 @@ df = load_data()
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
 
+
 # =========================================================
 # EXPLORAÇÃO
 # =========================================================
@@ -63,11 +64,68 @@ if page == "Exploração":
 
     st.title("📁 Exploração dos Dados")
 
-    st.subheader("Amostra")
+    # =========================
+    # 📌 DESCRIÇÃO DO DATASET
+    # =========================
+    st.markdown("""
+    ### 📊 Descrição dos Dados
+
+    Este dataset contém informações voltadas à análise de obesidade, reunindo dados físicos, demográficos e comportamentais dos indivíduos.
+
+    O objetivo é identificar padrões e fatores que influenciam a classificação de obesidade, permitindo análises preditivas e prescritivas para apoiar decisões médicas.
+    """)
+
+    # =========================
+    # 📐 DIMENSÃO DO DATASET
+    # =========================
+    linhas, colunas = df.shape
+
+    st.markdown(f"""
+    ### 📐 Dimensão da Base
+    - 🔹 Número de linhas: **{linhas}**
+    - 🔹 Número de colunas: **{colunas}**
+
+    Esses números indicam o volume de dados disponível para análise e modelagem.
+    """)
+
+    # =========================
+    # 🧩 TIPOS DE VARIÁVEIS
+    # =========================
+    st.markdown("""
+    ### 🧩 Tipos de Variáveis
+
+    O dataset é composto por diferentes tipos de variáveis:
+
+    - **Físicas:** Weight, Height, IMC  
+    - **Demográficas:** Age, Gender  
+    - **Comportamentais:** FAF, FCVC, CH2O, CALC, entre outras  
+    - **Variável alvo:** Obesity_level  
+
+    Essas variáveis permitem analisar tanto características biológicas quanto hábitos de vida.
+    """)
+
+    # =========================
+    # 📋 VISUALIZAÇÃO DOS DADOS
+    # =========================
+    st.subheader("🔍 Amostra dos Dados")
     st.write(df.head())
 
-    st.subheader("Estatísticas")
+    # =========================
+    # 📈 ESTATÍSTICAS
+    # =========================
+    st.subheader("📊 Estatísticas Descritivas")
     st.write(df.describe())
+
+    # =========================
+    # 🧠 INTERPRETAÇÃO
+    # =========================
+    st.markdown("""
+    ### 🧠 Interpretação
+
+    A presença de variáveis comportamentais (como atividade física e alimentação) combinadas com dados físicos permite entender que a obesidade não depende apenas de um fator isolado, mas do conjunto de hábitos do indivíduo.
+
+    Essa base é adequada para construção de modelos que vão além da previsão, permitindo recomendações práticas de melhoria.
+    """)
 
 # =========================================================
 # ANÁLISE
