@@ -271,4 +271,3 @@ else:
 
 As recomendações são baseadas nos padrões observados na análise dos dados.
 """)
-``
