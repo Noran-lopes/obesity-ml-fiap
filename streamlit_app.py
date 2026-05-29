@@ -129,14 +129,18 @@ if page == "Exploração":
 
 
 # =========================================================
-# ANÁLISE + MODELAGEM COMPLETA
+# ANÁLISE + MODELAGEM FINAL COMPLETA
 # =========================================================
 elif page == "Análise + Modelagem":
+
+    import numpy as np
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import confusion_matrix, accuracy_score
 
     st.title("📊 Análise + Modelagem")
 
     # =========================================================
-    # ORDEM DAS CLASSES
+    # 🔥 ORDEM DAS CLASSES
     # =========================================================
     ordem = [
         "Insufficient_Weight",
@@ -185,13 +189,8 @@ elif page == "Análise + Modelagem":
 
     O IMC apresenta crescimento progressivo entre os níveis de obesidade.
 
-    🔎 **Insights:**
-    - Há separação clara entre classes  
-    - IMC aumenta conforme o nível de obesidade  
-    - Classes intermediárias possuem leve sobreposição  
-
     🎯 **Conclusão:**
-    O IMC é o principal indicador para classificação da obesidade.
+    O IMC é o principal indicador para classificação.
     """)
 
     st.divider()
@@ -209,14 +208,10 @@ elif page == "Análise + Modelagem":
     st.markdown("""
     ### 🧠 Interpretação
 
-    A relação entre idade e IMC não é determinística.
-
-    🔎 **Insights:**
-    - Existe leve tendência de aumento com a idade  
-    - Há indivíduos com alto IMC em diversas idades  
+    A idade apresenta influência limitada no IMC.
 
     🎯 **Conclusão:**
-    A obesidade é multifatorial e não depende apenas da idade.
+    A obesidade é multifatorial.
     """)
 
     st.divider()
@@ -227,27 +222,38 @@ elif page == "Análise + Modelagem":
     st.subheader("3️⃣ Modelagem Preditiva")
 
     st.markdown("""
-    O modelo foi desenvolvido utilizando o algoritmo Random Forest.
+    Modelo utilizado: **Random Forest**
 
-    ✅ **Motivos da escolha:**
-    - Modela relações não lineares  
-    - Robusto a outliers  
-    - Reduz overfitting  
-
-    ✅ **Pipeline:**
-    - Criação do IMC  
-    - Encoding das variáveis categóricas  
-    - Divisão treino/teste  
-
-    🎯 **Objetivo:**
-    Prever corretamente o nível de obesidade.
+    ✅ Capta relações complexas  
+    ✅ Robusto e estável  
+    ✅ Ideal para classificação  
     """)
 
     # =========================================================
-    # VALIDAÇÃO DO MODELO
+    # 🔥 RECRIAR PIPELINE (CORREÇÃO DO ERRO)
     # =========================================================
-    from sklearn.metrics import confusion_matrix, accuracy_score
+    df_model = df.copy()
 
+    # remover variáveis usadas para cálculo
+    df_model = df_model.drop(["Weight", "Height"], axis=1)
+
+    # aplicar encoders
+    for col, enc in encoders.items():
+        if col in df_model.columns:
+            df_model[col] = enc.transform(df_model[col])
+
+    # separar X e y
+    X = df_model.drop("Obesity_level", axis=1)
+    y = df_model["Obesity_level"]
+
+    # split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    # =========================================================
+    # ✅ ACURÁCIA
+    # =========================================================
     y_pred = model.predict(X_test)
 
     acc = accuracy_score(y_test, y_pred)
@@ -255,7 +261,7 @@ elif page == "Análise + Modelagem":
     st.metric("✅ Acurácia do Modelo", f"{round(acc*100,2)}%")
 
     # =========================================================
-    # MATRIZ DE CONFUSÃO
+    # 📊 MATRIZ DE CONFUSÃO
     # =========================================================
     st.subheader("📊 Matriz de Confusão")
 
@@ -279,26 +285,23 @@ elif page == "Análise + Modelagem":
     st.markdown("""
     ### 🧠 Interpretação
 
-    A matriz de confusão demonstra a qualidade das previsões do modelo.
-
-    🔎 **Insights:**
-    - A maioria das previsões está correta (valores na diagonal)  
-    - Os erros acontecem entre classes vizinhas  
-    - Classes extremas apresentam alto acerto  
+    - Alta concentração na diagonal (acertos)  
+    - Erros ocorrem entre classes similares  
+    - Excelente desempenho geral  
 
     🎯 **Conclusão:**
-    O modelo possui excelente desempenho e é confiável para classificação.
+    Modelo altamente confiável.
     """)
 
     st.divider()
 
     # =========================================================
-    # FEATURE IMPORTANCE
+    # 📈 FEATURE IMPORTANCE
     # =========================================================
     st.subheader("📈 Importância das Variáveis")
 
     importances = pd.DataFrame({
-        "Variável": X_test.columns,
+        "Variável": X.columns,
         "Importância": model.feature_importances_
     }).sort_values(by="Importância", ascending=False)
 
@@ -311,23 +314,43 @@ elif page == "Análise + Modelagem":
         ax=ax
     )
 
-    ax.set_title("Top Variáveis Mais Importantes")
-
     st.pyplot(fig)
 
     st.markdown("""
     ### 🧠 Interpretação
 
-    O gráfico mostra quais variáveis mais influenciam a decisão do modelo.
-
-    🔎 **Insights:**
     - IMC é o principal fator  
-    - Variáveis comportamentais são relevantes  
-    - O modelo considera múltiplas dimensões  
+    - Hábitos comportamentais têm impacto relevante  
+    - Modelo considera múltiplos fatores  
 
     🎯 **Conclusão:**
-    A obesidade é explicada por fatores físicos e comportamentais em conjunto.
+    A obesidade é multifatorial e depende de comportamento + físico.
     """)
+
+    st.divider()
+
+    # =========================================================
+    # 💡 ANÁLISE PRESCRITIVA
+    # =========================================================
+    st.subheader("4️⃣ Análise Prescritiva")
+
+    st.markdown("""
+    ### 🔎 Fatores críticos:
+
+    - Baixa atividade física  
+    - Alimentação inadequada  
+    - Alto consumo calórico  
+
+    ### ✅ Recomendações:
+
+    - Aumentar atividade física  
+    - Melhorar alimentação  
+    - Reduzir calorias  
+
+    🎯 **Conclusão:**
+    A obesidade pode ser reduzida com mudanças comportamentais.
+    """)
+``
 # =========================================================
 # DASHBOARD EXECUTIVO FINAL
 # =========================================================
