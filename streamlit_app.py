@@ -442,48 +442,72 @@ elif page == "Dashboard":
 
     st.pyplot(fig)
 # =========================================================
-# CALCULADORA COMPLETA
+# CALCULADORA UX/UI MELHORADA
 # =========================================================
 elif page == "Calculadora":
 
-    st.title("🧠 Simulador Inteligente de Obesidade")
+    st.title("🧠 Simulador Inteligente de Saúde")
+
+    st.markdown("Preencha seus dados para receber uma análise completa do seu estado atual e recomendações personalizadas.")
 
     # =========================
-    # INPUTS
+    # 🧍 DADOS DO USUÁRIO
     # =========================
+    st.subheader("🧍 Dados Pessoais")
+
     col1, col2 = st.columns(2)
 
     with col1:
         idade = st.slider("Idade", 10, 80, 25)
-        altura = st.number_input("Altura (m)", 1.4, 2.2, 1.70)
-        peso = st.number_input("Peso (kg)", 40, 200, 70)
         genero = st.selectbox("Gênero", ["Male", "Female"])
 
     with col2:
-        faf = st.slider("Atividade Física (0=baixa | 3=alta)", 0, 3, 1)
-        fcvc = st.slider("Consumo de Vegetais (1=baixo | 3=alto)", 1, 3, 2)
-        ch2o = st.slider("Consumo de Água (1=baixo | 3=alto)", 1, 3, 2)
-        favc = st.selectbox("Consome alimentos calóricos?", ["yes", "no"])
-
-    # valores padrão (compatíveis com modelo)
-    ncp = 3
-    caec = "Sometimes"
-    smoke = "no"
-    scc = "no"
-    tue = 1
-    calc = "Sometimes"
-    mtrans = "Public_Transportation"
+        altura = st.number_input("Altura (m)", 1.4, 2.2, 1.70)
+        peso = st.number_input("Peso (kg)", 40, 200, 70)
 
     # =========================
-    # IMC
+    # 🏃 HÁBITOS
+    # =========================
+    st.subheader("🏃 Hábitos")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        faf = st.slider("Atividade Física", 0, 3, 1)
+        fcvc = st.slider("Consumo de Vegetais", 1, 3, 2)
+
+    with col2:
+        ch2o = st.slider("Consumo de Água", 1, 3, 2)
+        favc = st.selectbox("Consumo de alimentos calóricos", ["yes", "no"])
+
+    # =========================
+    # 📊 IMC (VISUAL)
     # =========================
     imc = peso / (altura ** 2)
-    st.metric("📊 Seu IMC", round(imc, 2))
 
-    if st.button("🔍 Analisar"):
+    if imc < 18.5:
+        st.info(f"📊 IMC: {round(imc,2)} (Abaixo do peso)")
+    elif imc < 25:
+        st.success(f"📊 IMC: {round(imc,2)} (Saudável)")
+    elif imc < 30:
+        st.warning(f"📊 IMC: {round(imc,2)} (Sobrepeso)")
+    else:
+        st.error(f"📊 IMC: {round(imc,2)} (Obesidade)")
+
+    # valores padrão modelo
+    ncp, caec, smoke = 3, "Sometimes", "no"
+    scc, tue, calc = "no", 1, "Sometimes"
+    mtrans = "Public_Transportation"
+
+    st.divider()
+
+    # =========================
+    # 🔍 BOTÃO
+    # =========================
+    if st.button("🔍 Gerar Análise Completa"):
 
         # =========================
-        # INPUT MODELO
+        # MODELO
         # =========================
         input_dict = {
             "Gender": genero,
@@ -504,7 +528,6 @@ elif page == "Calculadora":
 
         input_df = pd.DataFrame([input_dict])
 
-        # aplicar encoders
         for col, enc in encoders.items():
             if col in input_df.columns:
                 input_df[col] = enc.transform(input_df[col])
@@ -513,9 +536,6 @@ elif page == "Calculadora":
 
         pred = model.predict(input_df)[0]
 
-        # =========================
-        # TRADUÇÃO RESULTADO
-        # =========================
         labels_map = {
             "Insufficient_Weight": "Abaixo do peso",
             "Normal_Weight": "Peso normal",
@@ -523,105 +543,83 @@ elif page == "Calculadora":
             "Overweight_Level_II": "Sobrepeso II",
             "Obesity_Type_I": "Obesidade I",
             "Obesity_Type_II": "Obesidade II",
-            "Obesity_Type_III": "Obesidade III",
+            "Obesity_Type_III": "Obesidade III"
         }
 
         resultado = labels_map.get(pred, pred)
 
-        st.subheader(f"🏥 Classificação: {resultado}")
+        # =========================
+        # RESULTADO PRINCIPAL
+        # =========================
+        st.success(f"🏥 Classificação: {resultado}")
+
+        st.divider()
+
+        # =========================
+        # 🎯 PESO IDEAL
+        # =========================
+        st.subheader("🎯 Meta de Peso Saudável")
+
+        peso_min = 18.5 * (altura ** 2)
+        peso_max = 24.9 * (altura ** 2)
+
+        col1, col2 = st.columns(2)
+
+        col1.metric("Peso mínimo ideal", f"{round(peso_min,1)} kg")
+        col2.metric("Peso máximo ideal", f"{round(peso_max,1)} kg")
+
+        # =========================
+        # 📉 AJUSTE
+        # =========================
+        st.subheader("📉 Ajuste Necessário")
+
+        if peso > peso_max:
+            excesso = peso - peso_max
+            st.error(f"Você precisa reduzir aproximadamente **{round(excesso,1)} kg**")
+
+        elif peso < peso_min:
+            falta = peso_min - peso
+            st.warning(f"Você precisa ganhar aproximadamente **{round(falta,1)} kg**")
+
+        else:
+            st.success("✅ Você está dentro da faixa ideal")
 
         st.divider()
 
         # =========================
         # 🧠 DIAGNÓSTICO
         # =========================
-        st.subheader("🧠 Diagnóstico do Perfil")
+        st.subheader("🧠 Fatores de Atenção")
 
         riscos = []
-
-        if imc > 25:
-            riscos.append("IMC elevado")
 
         if faf < 1:
             riscos.append("Baixa atividade física")
 
         if fcvc < 2:
-            riscos.append("Baixo consumo de vegetais")
+            riscos.append("Baixa ingestão de vegetais")
 
         if ch2o < 2:
-            riscos.append("Baixo consumo de água")
+            riscos.append("Baixa ingestão de água")
 
         if favc == "yes":
-            riscos.append("Alto consumo de alimentos calóricos")
+            riscos.append("Alto consumo calórico")
 
         if riscos:
             for r in riscos:
-                st.write(f"⚠️ {r}")
+                st.warning(r)
         else:
-            st.success("✅ Perfil saudável identificado")
+            st.success("✅ Bons hábitos identificados")
 
         st.divider()
 
         # =========================
-        # 📊 ESTADO ATUAL (IMC)
-        # =========================
-        st.subheader("📊 Estado Atual")
-
-        if imc < 18.5:
-            status_imc = "Abaixo do peso"
-        elif imc < 25:
-            status_imc = "Saudável"
-        elif imc < 30:
-            status_imc = "Sobrepeso"
-        else:
-            status_imc = "Obesidade"
-
-        st.write(f"Classificação IMC: **{status_imc}**")
-
-        # =========================
-        # 🎯 PESO IDEAL
-        # =========================
-        st.subheader("🎯 Faixa de Peso Ideal")
-
-        peso_min = 18.5 * (altura ** 2)
-        peso_max = 24.9 * (altura ** 2)
-
-        st.write(f"Peso ideal mínimo: **{round(peso_min,1)} kg**")
-        st.write(f"Peso ideal máximo: **{round(peso_max,1)} kg**")
-
-        # =========================
-        # 📉 AJUSTE NECESSÁRIO
-        # =========================
-        st.subheader("📉 Ajuste Necessário")
-
-        if peso > peso_max:
-            excesso = peso - peso_max
-            st.warning(f"Você precisa perder cerca de **{round(excesso,1)} kg**")
-
-        elif peso < peso_min:
-            falta = peso_min - peso
-            st.warning(f"Você precisa ganhar cerca de **{round(falta,1)} kg**")
-
-        else:
-            st.success("Você está dentro da faixa ideal ✅")
-
-        st.divider()
-
-        # =========================
-        # 📈 PLANO DE EVOLUÇÃO
+        # 📈 PLANO
         # =========================
         st.subheader("📈 Plano de Evolução")
 
         if peso > peso_max:
-            st.write("🎯 Redução gradual de peso")
-            st.write("📌 Meta saudável: 0.5 a 1 kg por semana")
-
-        elif peso < peso_min:
-            st.write("🎯 Ganho de peso controlado")
-            st.write("📌 Ajustar ingestão calórica")
-
-        else:
-            st.write("🎯 Manutenção do peso atual")
+            st.write("🎯 Reduzir peso gradualmente")
 
         if faf < 1:
             st.write("✅ Aumentar atividade física")
@@ -630,15 +628,25 @@ elif page == "Calculadora":
             st.write("✅ Melhorar alimentação")
 
         if ch2o < 2:
-            st.write("✅ Beber mais água")
+            st.write("✅ Aumentar consumo de água")
 
         if favc == "yes":
             st.write("✅ Reduzir alimentos calóricos")
 
-        st.markdown("""
-        ---
-        🎯 **Resumo:**  
-        Ajustes no comportamento e hábitos são fundamentais para evolução da saúde.
+        st.divider()
+
+        # =========================
+        # ✅ RESUMO FINAL
+        # =========================
+        st.subheader("✅ Resumo")
+
+        st.info(f"""
+        Você está classificado como: **{resultado}**
+
+        Para melhorar sua condição:
+        - Ajuste seus hábitos
+        - Aproxime-se da faixa de peso ideal
+        - Mantenha consistência no tempo
         """)
 # =========================================================
 # RECOMENDAÇÕES
