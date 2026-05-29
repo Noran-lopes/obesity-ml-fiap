@@ -296,23 +296,115 @@ elif page == "Análise + Modelagem":
 # =========================================================
 # DASHBOARD
 # =========================================================
+# =========================================================
+# DASHBOARD
+# =========================================================
 elif page == "Dashboard":
 
     st.title("📊 Dashboard Executivo")
 
-    col1, col2 = st.columns(2)
+    # =========================
+    # 📌 KPIs
+    # =========================
+    col1, col2, col3 = st.columns(3)
+
     col1.metric("Total de Registros", len(df))
     col2.metric("IMC Médio", round(df["IMC"].mean(), 2))
+    col3.metric("Idade Média", round(df["Age"].mean(), 1))
 
-    if "Obesity_level" in df.columns:
+    st.divider()
+
+    # =========================
+    # 📊 GRÁFICOS
+    # =========================
+    col1, col2 = st.columns(2)
+
+    # 🔹 Distribuição de obesidade
+    with col1:
+        st.subheader("Distribuição de Obesidade")
+
+        if "Obesity_level" in df.columns:
+            fig, ax = plt.subplots()
+            df["Obesity_level"].value_counts().plot(kind="bar", ax=ax)
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+
+    # 🔹 IMC por classe
+    with col2:
+        st.subheader("IMC por Classe")
+
+        if "Obesity_level" in df.columns:
+            fig, ax = plt.subplots()
+            sns.boxplot(data=df, x="Obesity_level", y="IMC", ax=ax)
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+
+    st.divider()
+
+    # =========================
+    # 📊 SEGUNDA LINHA
+    # =========================
+    col1, col2 = st.columns(2)
+
+    # 🔹 Idade
+    with col1:
+        st.subheader("Distribuição de Idade")
 
         fig, ax = plt.subplots()
-        df["Obesity_level"].value_counts().plot(kind="bar", ax=ax)
-        plt.xticks(rotation=45)
+        df["Age"].hist(bins=20, ax=ax)
+        ax.set_xlabel("Idade")
+        ax.set_ylabel("Quantidade")
         st.pyplot(fig)
 
-    else:
-        st.warning("⚠️ Coluna Obesity_level não encontrada")
+    # 🔹 IMC geral
+    with col2:
+        st.subheader("Distribuição do IMC")
+
+        fig, ax = plt.subplots()
+        df["IMC"].hist(bins=20, ax=ax)
+        ax.set_xlabel("IMC")
+        ax.set_ylabel("Quantidade")
+        st.pyplot(fig)
+
+    st.divider()
+
+    # =========================
+    # 📊 TERCEIRA LINHA (COMPORTAMENTAL)
+    # =========================
+    col1, col2 = st.columns(2)
+
+    # 🔹 Atividade física
+    with col1:
+        st.subheader("Atividade Física (FAF)")
+
+        fig, ax = plt.subplots()
+        df["FAF"].value_counts().plot(kind="bar", ax=ax)
+        ax.set_xlabel("Nível")
+        ax.set_ylabel("Quantidade")
+        st.pyplot(fig)
+
+    # 🔹 Consumo de vegetais
+    with col2:
+        st.subheader("Consumo de Vegetais (FCVC)")
+
+        fig, ax = plt.subplots()
+        df["FCVC"].value_counts().plot(kind="bar", ax=ax)
+        ax.set_xlabel("Nível")
+        ax.set_ylabel("Quantidade")
+        st.pyplot(fig)
+
+    st.divider()
+
+    # =========================
+    # 📊 QUARTA LINHA (CORRELAÇÃO SIMPLES)
+    # =========================
+    st.subheader("Correlação entre variáveis numéricas")
+
+    fig, ax = plt.subplots()
+    corr = df[["Age", "IMC", "FAF", "FCVC", "CH2O"]].corr()
+    sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+
+    st.pyplot(fig)
 
 # =========================================================
 # CALCULADORA (MODELO REAL ✅🔥)
