@@ -1,191 +1,87 @@
 import streamlit as st
+import pandas as pd
 import pickle
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # =========================
 # CONFIG
 # =========================
-st.set_page_config(page_title="Obesity Prediction", layout="centered")
+st.set_page_config(page_title="Obesity App", layout="wide")
 
 # =========================
-# LANGUAGE
+# MENU
 # =========================
-lang = st.selectbox("Idioma / Language", ["Português", "English"])
-
-text = {
-    "Português": {
-        "title": "🧠 Predição de Nível de Obesidade",
-        "info": "Preencha os dados abaixo:",
-        "gender": "Gênero",
-        "age": "Idade",
-        "family": "Histórico familiar de obesidade",
-        "favc": "Consome alimentos calóricos com frequência?",
-        "veg": "Consumo de vegetais (1 baixa — 3 alta)",
-        "meals": "Número de refeições diárias",
-        "snacks": "Frequência de lanches (doces, salgados, fast food)",
-        "smoke": "Fuma?",
-        "water": "Consumo diário de água (litros)",
-        "calories": "Controla calorias?",
-        "activity": "Atividade física (dias/semana)",
-        "tech": "Tempo de tecnologia (horas/dia)",
-        "alcohol": "Consumo de álcool",
-        "transport": "Meio de transporte",
-        "weight": "Peso (kg)",
-        "height": "Altura (m)",
-        "predict": "🔍 Prever nível de obesidade"
-    },
-    "English": {
-        "title": "🧠 Obesity Level Prediction",
-        "info": "Fill in the data below:",
-        "gender": "Gender",
-        "age": "Age",
-        "family": "Family history of obesity",
-        "favc": "Frequent high-calorie food consumption?",
-        "veg": "Vegetable consumption (1 low — 3 high)",
-        "meals": "Number of daily meals",
-        "snacks": "Snacking frequency (sweets, snacks, fast food)",
-        "smoke": "Do you smoke?",
-        "water": "Daily water intake (liters)",
-        "calories": "Monitor calorie intake?",
-        "activity": "Physical activity (days/week)",
-        "tech": "Technology use (hours/day)",
-        "alcohol": "Alcohol consumption",
-        "transport": "Transport",
-        "weight": "Weight (kg)",
-        "height": "Height (m)",
-        "predict": "🔍 Predict obesity level"
-    }
-}
-
-t = text[lang]
+page = st.sidebar.selectbox(
+    "Navegação",
+    ["📊 Análise dos Dados", "🧠 Calculadora", "💡 Recomendações"]
+)
 
 # =========================
-# LOAD MODEL
+# LOAD
 # =========================
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
 
 # =========================
-# UI
+# 1️⃣ ANÁLISE DOS DADOS
 # =========================
-st.title(t["title"])
-st.write(t["info"])
+if page == "📊 Análise dos Dados":
 
-gender = st.selectbox(t["gender"], ["Male", "Female"])
-age = st.slider(t["age"], 10, 80)
+    st.title("📊 Análise dos Dados de Obesidade")
 
-family_history = st.selectbox(t["family"], ["yes", "no"])
-favc = st.selectbox(t["favc"], ["yes", "no"])
+    df = pd.read_csv("Obesity.csv")
 
-fcvc = st.slider(t["veg"], 1, 3)
-ncp = st.slider(t["meals"], 1, 5)
+    st.subheader("Distribuição de Obesidade")
+    fig, ax = plt.subplots()
+    sns.countplot(x="Obesity", data=df, ax=ax)
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
 
-caec = st.selectbox(
-    t["snacks"],
-    ["no", "Sometimes", "Frequently", "Always"]
-)
+    st.subheader("IMC por Categoria")
+    df["IMC"] = df["Weight"] / (df["Height"]**2)
+    
+    fig2, ax2 = plt.subplots()
+    sns.boxplot(x="Obesity", y="IMC", data=df, ax=ax2)
+    plt.xticks(rotation=45)
+    st.pyplot(fig2)
 
-smoke = st.selectbox(t["smoke"], ["yes", "no"])
+    st.subheader("Atividade Física vs Obesidade")
+    fig3, ax3 = plt.subplots()
+    sns.boxplot(x="Obesity", y="FAF", data=df, ax=ax3)
+    plt.xticks(rotation=45)
+    st.pyplot(fig3)
 
-ch2o = st.slider(t["water"], 1, 5)  # ✅ até 5L
-scc = st.selectbox(t["calories"], ["yes", "no"])
-
-faf = st.slider(t["activity"], 0, 7)
-tue = st.slider(t["tech"], 0, 24)  # ✅ até 24h
-
-calc = st.selectbox(t["alcohol"], ["no", "Sometimes", "Frequently", "Always"])
-
-mtrans = st.selectbox(
-    t["transport"],
-    ["Walking", "Bike", "Public_Transportation", "Automobile", "Motorbike"]
-)
+    st.info("Pessoas com menor atividade física apresentam maior incidência de obesidade.")
 
 # =========================
-# IMC
+# 2️⃣ CALCULADORA
 # =========================
-peso = st.number_input(t["weight"], 30.0, 200.0, 70.0)
-altura = st.number_input(t["height"], 1.40, 2.20, 1.70)
+elif page == "🧠 Calculadora":
 
-imc = peso / (altura ** 2)
+    st.title("🧠 Calculadora de Obesidade")
 
-st.write(f"📊 IMC: **{imc:.2f}**")
+    gender = st.selectbox("Gênero", ["Male", "Female"])
+    age = st.slider("Idade", 10, 80)
 
-# =========================
-# PREDICTION
-# =========================
-if st.button(t["predict"]):
+    family_history = st.selectbox("Histórico familiar", ["yes", "no"])
+    favc = st.selectbox("Comida calórica frequente?", ["yes", "no"])
 
-    input_dict = {
-        "Gender": gender,
-        "Age": age,
-        "family_history": family_history,
-        "FAVC": favc,
-        "FCVC": fcvc,
-        "NCP": ncp,
-        "CAEC": caec,
-        "SMOKE": smoke,
-        "CH2O": ch2o,
-        "SCC": scc,
-        "FAF": faf,
-        "TUE": tue,
-        "CALC": calc,
-        "MTRANS": mtrans,
-        "IMC": imc
-    }
+    fcvc = st.slider("Vegetais (1-3)", 1, 3)
+    ncp = st.slider("Refeições", 1, 5)
 
-    # ENCODING
-    for col in encoders:
-        if col in input_dict:
-            input_dict[col] = encoders[col].transform([input_dict[col]])[0]
+    caec = st.selectbox("Lanches (doces, fast food)", ["no", "Sometimes", "Frequently", "Always"])
+    smoke = st.selectbox("Fuma?", ["yes", "no"])
 
-    input_array = np.array(list(input_dict.values())).reshape(1, -1)
+    ch2o = st.slider("Água (litros)", 1, 5)
+    scc = st.selectbox("Controla calorias?", ["yes", "no"])
 
-    prediction = int(model.predict(input_array)[0])
+    faf = st.slider("Atividade física", 0, 7)
+    tue = st.slider("Tecnologia (horas)", 0, 24)
 
-    # =========================
-    # LABELS
-    # =========================
-    labels_pt = {
-        0: "Abaixo do peso",
-        1: "Peso normal",
-        2: "Sobrepeso I",
-        3: "Sobrepeso II",
-        4: "Obesidade I",
-        5: "Obesidade II",
-        6: "Obesidade III (mórbida)"
-    }
+    calc = st.selectbox("Álcool", ["no", "Sometimes", "Frequently", "Always"])
 
-    labels_en = {
-        0: "Underweight",
-        1: "Normal Weight",
-        2: "Overweight I",
-        3: "Overweight II",
-        4: "Obesity I",
-        5: "Obesity II",
-        6: "Obesity III (severe)"
-    }
+    mtrans = st.selectbox("Transporte", ["Walking", "Bike", "Public_Transportation", "Automobile", "Motorbike"])
 
-    label = labels_pt if lang == "Português" else labels_en
 
-    st.success(f"✅ Resultado: **{label[prediction]}**")
-
-    # =========================
-    # RISK INTERPRETATION
-    # =========================
-    if prediction <= 1:
-        st.info("🟢 Nível saudável")
-    elif prediction <= 3:
-        st.warning("🟡 Atenção: sobrepeso")
-    else:
-        st.error("🔴 Risco elevado de obesidade")
-
-    # =========================
-    # VISUAL SCALE
-    # =========================
-    st.subheader("📊 Posição no quadro de obesidade")
-    st.progress((prediction + 1) / 7)
-
-    # =========================
-    # FOOTER
-    # =========================
-    st.info("💡 Resultado baseado em hábitos e características físicas.")
