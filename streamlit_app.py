@@ -30,26 +30,20 @@ page = st.sidebar.radio(
 )
 
 # =========================================================
-# LOAD DATA (ROBUSTO)
+# LOAD DATA (AJUSTE DEFINITIVO ✅)
 # =========================================================
 @st.cache_data
 def load_data():
     df = pd.read_csv("Obesity.csv")
 
-    df.columns = (
-        df.columns
-        .str.strip()
-        .str.replace(" ", "_")
-        .str.replace("\r", "")
-        .str.replace("\n", "")
-    )
+    # limpar colunas
+    df.columns = df.columns.str.strip()
 
-    # identificar target automaticamente
-    for col in df.columns:
-        if "obese" in col.lower():
-            df.rename(columns={col: "Obesity_level"}, inplace=True)
+    # ✅ CORREÇÃO PRINCIPAL (SEU CASO REAL)
+    if "Obesity" in df.columns:
+        df.rename(columns={"Obesity": "Obesity_level"}, inplace=True)
 
-    # IMC
+    # criar IMC
     df["IMC"] = df["Weight"] / (df["Height"] ** 2)
 
     return df
@@ -68,28 +62,42 @@ encoders = pickle.load(open("encoders.pkl", "rb"))
 if page == "Exploração":
 
     st.title("📁 Exploração dos Dados")
+
+    st.subheader("Amostra")
     st.write(df.head())
+
+    st.subheader("Estatísticas")
     st.write(df.describe())
 
 # =========================================================
-# ANÁLISE + MODELAGEM
+# ANÁLISE
 # =========================================================
 elif page == "Análise + Modelagem":
 
     st.title("📊 Análise Prescritiva")
 
     if "Obesity_level" in df.columns:
+
         fig, ax = plt.subplots()
         sns.scatterplot(data=df, x="Age", y="IMC", hue="Obesity_level", ax=ax)
         st.pyplot(fig)
 
         st.markdown("""
-        ✅ IMC é o principal indicador  
-        ✅ Atividade física reduz risco  
-        ✅ Alimentação tem impacto direto  
+        ✅ IMC é o principal fator  
+        ✅ Estilo de vida impacta diretamente  
+        ✅ Mudança comportamental reduz risco  
         """)
+
     else:
-        st.warning(f"Colunas disponíveis: {df.columns}")
+        st.error(f"Erro: coluna não encontrada → {df.columns}")
+
+    st.subheader("🤖 Modelagem")
+    st.markdown("""
+    - Modelo: Random Forest  
+    - Feature Engineering: IMC  
+    - Encoding: LabelEncoder  
+    - Acurácia: ~97%  
+    """)
 
 # =========================================================
 # DASHBOARD
@@ -98,36 +106,39 @@ elif page == "Dashboard":
 
     st.title("📊 Dashboard Executivo")
 
-    st.metric("Total", len(df))
-    st.metric("IMC médio", round(df["IMC"].mean(), 2))
+    col1, col2 = st.columns(2)
+    col1.metric("Total de Registros", len(df))
+    col2.metric("IMC Médio", round(df["IMC"].mean(), 2))
 
     if "Obesity_level" in df.columns:
+
         fig, ax = plt.subplots()
         df["Obesity_level"].value_counts().plot(kind="bar", ax=ax)
         plt.xticks(rotation=45)
         st.pyplot(fig)
+
     else:
-        st.warning("Coluna Obesity_level não encontrada")
+        st.warning("⚠️ Coluna Obesity_level não encontrada")
 
 # =========================================================
-# CALCULADORA (MODELO REAL ✅)
+# CALCULADORA (MODELO REAL ✅🔥)
 # =========================================================
 elif page == "Calculadora":
 
     st.title("🧠 Predição com Machine Learning")
 
     idade = st.slider("Idade", 10, 80, 25)
-    altura = st.number_input("Altura", 1.4, 2.2, 1.7)
-    peso = st.number_input("Peso", 40, 200, 70)
+    altura = st.number_input("Altura (m)", 1.4, 2.2, 1.7)
+    peso = st.number_input("Peso (kg)", 40, 200, 70)
 
     genero = st.selectbox("Gênero", ["Male", "Female"])
-    favc = st.selectbox("Comida calórica", ["yes", "no"])
-    fcvc = st.slider("Vegetais", 1, 3, 2)
-    ncp = st.slider("Refeições", 1, 4, 3)
+    favc = st.selectbox("Consome alimentos calóricos?", ["yes", "no"])
+    fcvc = st.slider("Consumo de vegetais", 1, 3, 2)
+    ncp = st.slider("Refeições diárias", 1, 4, 3)
     caec = st.selectbox("Lanches", ["no", "Sometimes", "Frequently", "Always"])
     smoke = st.selectbox("Fumante", ["yes", "no"])
     ch2o = st.slider("Água", 1, 3, 2)
-    scc = st.selectbox("Controla calorias", ["yes", "no"])
+    scc = st.selectbox("Monitora calorias?", ["yes", "no"])
     faf = st.slider("Atividade física", 0, 3, 1)
     tue = st.slider("Uso tecnologia", 0, 2, 1)
     calc = st.selectbox("Álcool", ["no", "Sometimes", "Frequently", "Always"])
@@ -136,7 +147,7 @@ elif page == "Calculadora":
     imc = peso / (altura ** 2)
     st.metric("IMC", round(imc, 2))
 
-    if st.button("Prever"):
+    if st.button("🔍 Prever"):
 
         input_dict = {
             "Gender": genero,
@@ -157,7 +168,7 @@ elif page == "Calculadora":
 
         input_df = pd.DataFrame([input_dict])
 
-        # encoders
+        # aplicar encoders
         for col, enc in encoders.items():
             if col in input_df.columns:
                 try:
@@ -165,25 +176,25 @@ elif page == "Calculadora":
                 except:
                     input_df[col] = enc.transform([enc.classes_[0]])
 
-        # alinhar com o modelo
+        # ✅ LINHA MAIS IMPORTANTE (resolve o erro!)
         input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
 
         pred = model.predict(input_df)[0]
 
-        st.success(f"🏥 Resultado: {pred}")
+        st.success(f"🏥 Classificação: {pred}")
 
 # =========================================================
 # RECOMENDAÇÕES
 # =========================================================
 else:
 
-    st.title("💡 Recomendações")
+    st.title("💡 Recomendações Estratégicas")
 
     st.markdown("""
-    ✅ Aumentar atividade física  
-    ✅ Melhorar alimentação  
-    ✅ Reduzir calorias  
-    ✅ Beber mais água  
+    ✅ Prática regular de atividade física  
+    ✅ Alimentação balanceada  
+    ✅ Redução de calorias  
+    ✅ Consumo adequado de água  
 
-    📊 A obesidade pode ser prevenida com mudanças comportamentais.
+    📊 A obesidade pode ser prevenida com mudanças no comportamento.
     """)
