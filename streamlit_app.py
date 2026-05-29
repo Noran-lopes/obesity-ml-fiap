@@ -333,7 +333,8 @@ A obesidade é resultado de fatores físicos e comportamentais combinados.
 # =========================================================
 # DASHBOARD EXECUTIVO FINAL
 # =========================================================
-elif page == "Dashboard":
+
+    elif page == "Dashboard":
 
     st.title("📊 Dashboard Executivo de Obesidade")
 
