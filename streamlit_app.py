@@ -13,8 +13,8 @@ st.write("Preencha os dados abaixo para prever o nível de obesidade.")
 # =========================
 # LOAD MODEL
 # =========================
-model = pickle.load(open("models/model.pkl", "rb"))
-encoders = pickle.load(open("models/encoders.pkl", "rb"))
+model = pickle.load(open("model.pkl", "rb"))
+encoders = pickle.load(open("encoders.pkl", "rb"))
 
 # =========================
 # INPUTS
