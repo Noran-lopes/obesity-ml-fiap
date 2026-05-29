@@ -30,15 +30,12 @@ page = st.sidebar.radio(
 )
 
 # =========================================================
-# 📥 LOAD DATA (CACHEADO PARA PERFORMANCE)
+# 📥 LOAD DATA
 # =========================================================
 @st.cache_data
 def load_data():
     df = pd.read_csv("Obesity.csv")
-
-    # Feature Engineering: criação do IMC
     df["IMC"] = df["Weight"] / (df["Height"] ** 2)
-
     return df
 
 df = load_data()
@@ -50,7 +47,7 @@ model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
 
 # =========================================================
-# 🔢 ORDEM DAS CLASSES (IMPORTANTE)
+# ORDEM DAS CLASSES
 # =========================================================
 order_original = [
     "Insufficient_Weight",
@@ -79,33 +76,20 @@ if page == "📁 Apresentação dos Dados":
 
     st.title("📁 Entendimento do Dataset")
 
-    st.write(f"🔢 Registros: {df.shape[0]}")
-    st.write(f"📊 Variáveis: {df.shape[1]}")
+    st.write(f"Registros: {df.shape[0]}")
+    st.write(f"Variáveis: {df.shape[1]}")
 
     # Tipos + descrição
-    st.subheader("📊 Tipos de dados")
-
     tipos = df.dtypes.reset_index()
     tipos.columns = ["Variável", "Tipo técnico"]
 
-    descricao = {
-        "Age": "Idade (anos)",
-        "Height": "Altura (m)",
-        "Weight": "Peso (kg)",
-        "FAF": "Atividade física",
-        "TUE": "Tempo de tecnologia",
-        "IMC": "Índice de Massa Corporal"
-    }
-
-    tipos["Descrição"] = tipos["Variável"].map(descricao)
-
+    st.subheader("Tipos de dados")
     st.dataframe(tipos, use_container_width=True)
 
-    # Estatística descritiva
-    st.subheader("📊 Estatísticas (Média, Mínimo e Máximo)")
+    # Estatísticas
+    st.subheader("Estatísticas descritivas")
     stats = df.describe().T[["mean", "min", "max"]]
     stats.columns = ["Média", "Mínimo", "Máximo"]
-
     st.dataframe(stats)
 
 # =========================================================
@@ -115,101 +99,70 @@ elif page == "📊 Análise + Modelagem":
 
     st.title("📊 Análise e Modelagem")
 
-    # ---------------------------
-    # DISTRIBUIÇÃO
-    # ---------------------------
-    st.subheader("Distribuição dos níveis de obesidade")
+    # =========================
+    # IDADE VS OBESIDADE
+    # =========================
+    st.subheader("Idade vs obesidade")
 
     fig, ax = plt.subplots(figsize=(10,5))
-    sns.countplot(data=df, x="Obesity", order=order_original, palette="viridis", ax=ax)
+    sns.boxplot(
+        data=df,
+        x="Obesity",
+        y="Age",
+        order=order_original,
+        palette="viridis"
+    )
 
     ax.set_xticklabels(labels_pt, rotation=30)
-    ax.set_ylabel("")
-    ax.set_yticks([])
-
-    for p in ax.patches:
-        ax.annotate(f"{int(p.get_height())}", (p.get_x()+p.get_width()/2., p.get_height()), ha="center")
 
     st.pyplot(fig)
 
     st.markdown("""
-A distribuição apresenta equilíbrio entre os níveis, com maior concentração em obesidade tipo I.
-Isso contribui para um modelo mais estável e menos enviesado.
-""")
-
-    # ---------------------------
-    # IDADE VS OBESIDADE
-    # ---------------------------
-    st.subheader("Idade vs obesidade")
-
-    fig2, ax2 = plt.subplots(figsize=(10,5))
-    sns.boxplot(data=df, x="Obesity", y="Age", order=order_original, palette="viridis")
-
-    ax2.set_xticklabels(labels_pt, rotation=30)
-
-    st.pyplot(fig2)
-
-    st.markdown("""
-Observa-se aumento gradual da idade ao longo dos níveis de obesidade.
+Observa-se aumento gradual da idade conforme os níveis de obesidade crescem.
 
 ### Outliers
-Há presença de valores extremos (pontos fora da caixa), indicando indivíduos significativamente mais velhos dentro de determinadas classes.
+Há presença de valores fora do padrão (outliers), representados pelos pontos acima dos limites das caixas.
 
-Esses outliers representam variações reais da população e indicam que a obesidade pode ocorrer também em faixas etárias mais elevadas.
+Esses valores indicam indivíduos significativamente mais velhos dentro de determinadas classes.
+
+➡️ Interpretação:
+Os outliers refletem variações reais da população e indicam que a obesidade pode ocorrer também em faixas etárias mais avançadas.
 
 ### Conclusão
-A idade influencia o risco, mas não é fator isolado — atuando em conjunto com estilo de vida e hábitos.
+A idade contribui para o risco, mas atua em conjunto com hábitos e estilo de vida.
 """)
 
-    # ---------------------------
-    # IMC
-    # ---------------------------
-    st.subheader("IMC vs obesidade")
-
-    fig3, ax3 = plt.subplots(figsize=(10,5))
-    sns.boxplot(data=df, x="Obesity", y="IMC", order=order_original, palette="coolwarm")
-
-    ax3.set_xticklabels(labels_pt, rotation=30)
-
-    st.pyplot(fig3)
-
-    st.markdown("""
-O IMC cresce de forma consistente com o nível de obesidade,
-confirmando seu papel como principal variável explicativa.
-""")
-
-    # ======================================================
-    # 🤖 MODELAGEM
-    # ======================================================
-    st.subheader("🧠 Metodologia de Modelagem")
+    # =========================
+    # MODELAGEM
+    # =========================
+    st.subheader("🧠 Metodologia de modelagem")
 
     st.markdown("""
 ### Preparação dos dados
-- Criação do IMC  
-- Remoção de altura e peso para evitar vazamento de dados  
-- Codificação de variáveis categóricas  
+- Criação da variável IMC  
+- Remoção de Height e Weight (evitar vazamento de dados)  
+- Encoding de variáveis categóricas  
 
 ### Modelo
 Foi utilizado o algoritmo Random Forest.
 
 ### Justificativa
-O Random Forest foi escolhido pois:
-- Lida bem com dados mistos  
+- Lida bem com dados numéricos e categóricos  
 - Captura relações não lineares  
 - É robusto a outliers  
-- Reduz overfitting por meio de múltiplas árvores  
+- Reduz overfitting  
 
 ### Estratégia
 - Divisão treino/teste (80/20)
-- Avaliação fora da base de treino
+- Avaliação com dados não vistos
 
 ### Resultado
-Acurácia aproximada de 97%, indicando boa capacidade de generalização.
+Acurácia aproximada de 97%, indicando boa generalização.
 """)
 
-    # ======================================================
-    # 📊 AVALIAÇÃO
-    # ======================================================
+    # =========================
+    # AVALIAÇÃO DO MODELO
+    # =========================
     st.subheader("📊 Avaliação do modelo")
 
     df_model = df.drop(["Weight", "Height"], axis=1)
@@ -220,21 +173,69 @@ Acurácia aproximada de 97%, indicando boa capacidade de generalização.
     X = df_model.drop("Obesity", axis=1)
     y = df_model["Obesity"]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
     y_pred = model.predict(X_test)
 
     acc = accuracy_score(y_test, y_pred)
 
-    st.metric("Acurácia", f"{acc:.2%}")
+    st.metric("Acurácia do modelo", f"{acc:.2%}")
 
-    # matriz
+    # MATRIZ DE CONFUSÃO
+    st.subheader("Matriz de confusão")
+
     fig_cm, ax_cm = plt.subplots()
     sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues")
+
     st.pyplot(fig_cm)
 
     st.markdown("""
-O modelo apresenta alto nível de acerto, com erros concentrados entre categorias próximas,
-o que é esperado para variáveis contínuas como o IMC.
+A matriz indica alta taxa de acerto, com erros concentrados entre classes próximas.
+
+Isso é esperado devido à continuidade das categorias de obesidade.
+""")
+
+    # =========================
+    # FEATURE IMPORTANCE (🔥 NOVO)
+    # =========================
+    st.subheader("📊 Importância das variáveis")
+
+    importances = model.feature_importances_
+
+    importance_df = pd.DataFrame({
+        "Variável": X.columns,
+        "Importância": importances
+    }).sort_values(by="Importância", ascending=False)
+
+    # gráfico
+    fig_imp, ax_imp = plt.subplots(figsize=(10,5))
+    sns.barplot(
+        data=importance_df,
+        x="Importância",
+        y="Variável",
+        palette="viridis",
+        ax=ax_imp
+    )
+
+    st.pyplot(fig_imp)
+
+    st.markdown("""
+### 📌 Interpretação
+
+O gráfico mostra o peso de cada variável na tomada de decisão do modelo.
+
+Observa-se que:
+
+- O IMC é a variável mais relevante  
+- Atividade física e alimentação também possuem forte impacto  
+- Variáveis comportamentais complementam a previsão  
+
+### 🎯 Conclusão
+
+Os fatores mais importantes identificados pelo modelo estão alinhados com a análise exploratória,
+o que reforça a consistência e confiabilidade do resultado.
 """)
 
 # =========================================================
@@ -245,16 +246,12 @@ elif page == "🧠 Calculadora":
     st.title("🧠 Predição de Obesidade")
 
     age = st.slider("Idade", 10, 80)
-    faf = st.slider("Atividade física (dias)", 0, 7)
-
     peso = st.number_input("Peso", 30.0, 200.0)
     altura = st.number_input("Altura", 1.40, 2.20)
 
-    imc = peso / (altura**2)
+    imc = peso / (altura ** 2)
 
     st.write(f"IMC: {imc:.2f}")
-
-    st.info("A predição considera hábitos e características físicas.")
 
 # =========================================================
 # 💡 RECOMENDAÇÕES
@@ -264,10 +261,10 @@ else:
     st.title("💡 Recomendações")
 
     st.markdown("""
-- A prática regular de atividade física reduz o risco de obesidade  
-- A alimentação equilibrada é essencial para controle do peso  
-- Redução do sedentarismo (tempo de tela) é importante  
-- Monitorar o IMC permite identificar riscos precocemente  
+- Praticar atividade física regularmente  
+- Reduzir consumo de alimentos calóricos  
+- Monitorar o IMC  
+- Diminuir comportamento sedentário  
 
-As recomendações são baseadas nos padrões observados na análise dos dados.
+Essas recomendações são baseadas nos padrões identificados na análise dos dados.
 """)
