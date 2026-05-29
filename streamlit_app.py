@@ -20,11 +20,10 @@ def load_data():
     return df
 
 df = load_data()
-
 model = pickle.load(open("model.pkl", "rb"))
 encoders = pickle.load(open("encoders.pkl", "rb"))
 
-# ordem correta
+# ORDEM
 order_original = [
     "Insufficient_Weight",
     "Normal_Weight",
@@ -45,34 +44,42 @@ labels_pt = [
     "Obesidade III"
 ]
 
-# =========================================================
 # MENU
-# =========================================================
 page = st.sidebar.radio(
     "📊 Navegação",
-    ["📁 Apresentação", "📊 Análise + Modelagem", "🧠 Calculadora"]
+    ["📁 Apresentação dos Dados", "📊 Análise + Modelagem", "🧠 Calculadora"]
 )
 
 # =========================================================
 # 📁 APRESENTAÇÃO
 # =========================================================
-if page == "📁 Apresentação":
+if page == "📁 Apresentação dos Dados":
 
-    st.title("📁 Entendimento dos Dados")
+    st.title("📁 Entendimento do Dataset")
+
+    st.markdown("""
+Este dataset foi desenvolvido para análise de obesidade com base em características físicas e comportamentais.
+
+Ele combina:
+- dados fisiológicos (idade, altura, peso)
+- hábitos de vida (alimentação, atividade física)
+- comportamentos diários (tecnologia, álcool)
+
+🎯 Objetivo:
+Permitir análise dos fatores que influenciam a obesidade e apoiar modelos preditivos.
+""")
 
     st.write(f"Registros: {df.shape[0]}")
     st.write(f"Variáveis: {df.shape[1]}")
 
-    st.subheader("📊 Estatísticas Descritivas")
+    st.subheader("📊 Estatísticas descritivas")
 
     stats = df.describe().T[["mean", "min", "max"]]
     stats.columns = ["Média", "Mínimo", "Máximo"]
-
     st.dataframe(stats)
 
     st.markdown("""
-A base apresenta boa variabilidade entre idade, peso e comportamento,
-permitindo análise consistente dos fatores associados à obesidade.
+A análise estatística mostra boa variabilidade dos dados, essencial para modelagem robusta.
 """)
 
 # =========================================================
@@ -80,12 +87,12 @@ permitindo análise consistente dos fatores associados à obesidade.
 # =========================================================
 elif page == "📊 Análise + Modelagem":
 
-    st.title("📊 Análise Exploratória")
+    st.title("📊 Análise Exploratória e Modelagem")
 
-    # -----------------------
+    # ---------------------------
     # DISTRIBUIÇÃO
-    # -----------------------
-    st.subheader("Distribuição da Obesidade")
+    # ---------------------------
+    st.subheader("Distribuição dos níveis de obesidade")
 
     fig, ax = plt.subplots(figsize=(10,5))
 
@@ -100,19 +107,21 @@ elif page == "📊 Análise + Modelagem":
     ax.set_yticks([])
 
     for p in ax.patches:
-        ax.annotate(int(p.get_height()),
-                    (p.get_x() + p.get_width()/2., p.get_height()),
-                    ha='center')
+        ax.annotate(
+            int(p.get_height()),
+            (p.get_x()+p.get_width()/2., p.get_height()),
+            ha="center"
+        )
 
     st.pyplot(fig)
 
     st.markdown("""
-A base apresenta boa distribuição entre as classes, reduzindo risco de viés no modelo.
+A distribuição é equilibrada, permitindo treinamento sem viés significativo.
 """)
 
-    # -----------------------
+    # ---------------------------
     # IMC
-    # -----------------------
+    # ---------------------------
     st.subheader("IMC vs Obesidade")
 
     fig2, ax2 = plt.subplots(figsize=(10,5))
@@ -129,14 +138,12 @@ A base apresenta boa distribuição entre as classes, reduzindo risco de viés n
     st.pyplot(fig2)
 
     st.markdown("""
-Há separação clara entre as classes, indicando que o IMC é o principal fator explicativo.
-
-Outliers são mínimos, indicando consistência da variável.
+IMC apresenta crescimento consistente → principal variável explicativa.
 """)
 
-    # -----------------------
+    # ---------------------------
     # IDADE
-    # -----------------------
+    # ---------------------------
     st.subheader("Idade vs Obesidade")
 
     fig3, ax3 = plt.subplots(figsize=(10,5))
@@ -153,19 +160,15 @@ Outliers são mínimos, indicando consistência da variável.
     st.pyplot(fig3)
 
     st.markdown("""
-Observa-se aumento gradual da idade.
+Idade aumenta progressivamente.
 
-### Outliers:
-Presença de indivíduos mais velhos em diferentes classes, indicando variabilidade real da população.
-
-### Conclusão:
-A idade contribui para o risco, mas não é determinante isoladamente.
+Outliers mostram variabilidade real da população.
 """)
 
-    # -----------------------
+    # ---------------------------
     # ATIVIDADE
-    # -----------------------
-    st.subheader("Atividade Física")
+    # ---------------------------
+    st.subheader("Atividade física")
 
     fig4, ax4 = plt.subplots()
 
@@ -174,33 +177,29 @@ A idade contribui para o risco, mas não é determinante isoladamente.
     st.pyplot(fig4)
 
     st.markdown("""
-Indivíduos com menor atividade física apresentam níveis mais altos de obesidade.
+Menor atividade física → maior obesidade.
 """)
 
-    # -----------------------
+    # ---------------------------
     # MODELAGEM
-    # -----------------------
+    # ---------------------------
     st.subheader("🧠 Modelagem")
 
     st.markdown("""
-O modelo foi desenvolvido com:
+Pipeline:
 
-- Engenharia de variável (IMC)
-- Remoção de Height/Weight (evitar leakage)
-- Encoding de categóricas
-- Random Forest
+- criação do IMC  
+- remoção de Height e Weight (evitar leakage)  
+- encoding de categóricas  
+- modelo: Random Forest  
 
-### Justificativa:
-- Captura relações não lineares
-- Robusto a outliers
-- Alta performance
+Justificativa:
+- robusto
+- captura não linearidade
+- evita overfitting
 """)
 
-    # -----------------------
-    # AVALIAÇÃO
-    # -----------------------
-    st.subheader("📊 Avaliação")
-
+    # avaliação
     df_model = df.drop(["Weight", "Height"], axis=1)
 
     for col in df_model.select_dtypes("object"):
@@ -217,68 +216,84 @@ O modelo foi desenvolvido com:
 
     fig_cm, ax_cm = plt.subplots()
     sns.heatmap(confusion_matrix(y_test, pred), annot=True, fmt="d")
-
     st.pyplot(fig_cm)
 
-    # FEATURE IMPORTANCE
+    # ---------------------------
+    # FEATURE IMPORTANCE (VERTICAL)
+    # ---------------------------
     st.subheader("Importância das variáveis")
 
     imp = pd.DataFrame({
         "Feature": X.columns,
         "Importância": model.feature_importances_
-    }).sort_values(by="Importância", ascending=False)
+    }).sort_values(by="Importância", ascending=True)
 
-    st.bar_chart(imp.set_index("Feature"))
+    fig_imp, ax_imp = plt.subplots(figsize=(8,6))
+
+    ax_imp.barh(imp["Feature"], imp["Importância"], color="teal")
+
+    st.pyplot(fig_imp)
 
     st.markdown("""
-IMC é a principal variável, seguida por atividade física e alimentação,
-reforçando a consistência entre análise exploratória e modelo.
+IMC é o principal driver, seguido por comportamento (atividade e alimentação).
 """)
 
 # =========================================================
-# 🧠 CALCULADORA (NÍVEL FINAL)
+# 🧠 CALCULADORA COMPLETA
 # =========================================================
-elif page == "🧠 Calculadora":
+else:
 
     st.title("🧠 Avaliação personalizada")
 
-    age = st.slider("Idade", 10, 80)
-    faf = st.slider("Atividade física", 0, 7)
-    favc = st.selectbox("Alimentos calóricos", ["yes", "no"])
-    calc = st.selectbox("Álcool", ["no", "Sometimes", "Frequently", "Always"])
-    fcvc = st.slider("Vegetais", 1, 3)
+    gender = st.selectbox("Gênero", ["Male","Female"])
+    age = st.slider("Idade",10,80)
 
-    peso = st.number_input("Peso", 30.0, 200.0)
-    altura = st.number_input("Altura", 1.40, 2.20)
+    favc = st.selectbox("Consumo calórico",["yes","no"])
+    fcvc = st.slider("Vegetais",1,3)
 
-    imc = peso / (altura**2)
+    faf = st.slider("Atividade física",0,7)
+    tue = st.slider("Tempo de tecnologia",0,24)
+
+    calc = st.selectbox("Álcool",["no","Sometimes","Frequently","Always"])
+
+    peso = st.number_input("Peso",30.0,200.0)
+    altura = st.number_input("Altura",1.40,2.20)
+
+    imc = peso/(altura**2)
 
     st.write(f"IMC atual: {imc:.2f}")
 
     if st.button("Avaliar"):
 
-        # peso ideal
-        peso_ideal = 24.9 * (altura**2)
+        peso_ideal = 24.9*(altura**2)
+
+        st.subheader("Resultado")
+
+        input_dict = {
+            "Gender": gender,
+            "Age": age,
+            "FAVC": favc,
+            "FCVC": fcvc,
+            "FAF": faf,
+            "TUE": tue,
+            "CALC": calc,
+            "IMC": imc
+        }
+
+        # recomendacoes inteligentes
+        st.subheader("💡 Recomendações")
+
+        if calc in ["Frequently","Always"]:
+            st.write("Reduzir álcool pode levar você a uma classificação melhor.")
+
+        if favc == "yes":
+            st.write("Reduzir calorias pode diminuir o nível de obesidade.")
+
+        if faf <= 2:
+            st.write("Aumentar atividade física pode reverter o quadro.")
+
+        if fcvc <= 1:
+            st.write("Aumentar vegetais melhora o metabolismo.")
 
         st.subheader("⚖️ Peso ideal")
         st.write(f"{peso_ideal:.1f} kg")
-
-        # recomendacoes inteligentes
-        st.subheader("💡 Como melhorar")
-
-        if favc == "yes":
-            st.write("Reduzir alimentos calóricos pode diminuir seu nível de obesidade.")
-
-        if faf <= 1:
-            st.write("Aumentar atividade física pode reduzir significativamente seu risco.")
-
-        if calc in ["Frequently", "Always"]:
-            st.write("Reduzir álcool pode ajudar a alcançar um nível mais saudável.")
-
-        if fcvc <= 1:
-            st.write("Aumentar vegetais pode contribuir para redução de peso.")
-
-        diff = peso - peso_ideal
-
-        if diff > 0:
-            st.write(f"Reduzindo cerca de {diff:.1f} kg você pode atingir uma faixa mais saudável.")
