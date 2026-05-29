@@ -294,11 +294,11 @@ elif page == "Análise + Modelagem":
     else:
         st.error(f"Coluna não encontrada: {df.columns}")
 # =========================================================
-# DASHBOARD
+# DASHBOARD EXECUTIVO (VERSÃO FINAL)
 # =========================================================
 elif page == "Dashboard":
 
-    st.title("📊 Dashboard Executivo")
+    st.title("📊 Dashboard Executivo de Obesidade")
 
     # =========================
     # KPIs
@@ -306,13 +306,13 @@ elif page == "Dashboard":
     col1, col2, col3 = st.columns(3)
 
     col1.metric("Total de Registros", len(df))
-    col2.metric("IMC Médio", round(df["IMC"].mean(), 2))
-    col3.metric("Idade Média", round(df["Age"].mean(), 1))
+    col2.metric("Idade Média", round(df["Age"].mean(), 1))
+    col3.metric("IMC Médio", round(df["IMC"].mean(), 2))
 
     st.divider()
 
     # =========================
-    # 🔥 ORDEM DAS CLASSES
+    # ORDEM DAS CLASSES
     # =========================
     ordem = [
         "Insufficient_Weight",
@@ -334,47 +334,50 @@ elif page == "Dashboard":
         "Obesidade III"
     ]
 
-    # =========================
-    # LINHA 1
-    # =========================
+    df_plot = df.copy()
+
+    if "Obesity_level" in df_plot.columns:
+        df_plot["Obesity_level"] = pd.Categorical(
+            df_plot["Obesity_level"],
+            categories=ordem,
+            ordered=True
+        )
+
+    # =========================================================
+    # LINHA 1 — DISTRIBUIÇÃO + IMC
+    # =========================================================
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Distribuição de Obesidade")
+        st.subheader("Distribuição dos Níveis de Obesidade")
 
-        if "Obesity_level" in df.columns:
-            df_plot = df.copy()
+        contagem = df_plot["Obesity_level"].value_counts().sort_index()
 
-            df_plot["Obesity_level"] = pd.Categorical(
-                df_plot["Obesity_level"],
-                categories=ordem,
-                ordered=True
-            )
+        fig, ax = plt.subplots()
+        contagem.plot(kind="bar", ax=ax)
 
-            contagem = df_plot["Obesity_level"].value_counts().sort_index()
+        ax.set_xticklabels(labels_pt, rotation=45)
+        ax.set_ylabel("Quantidade")
+        ax.set_xlabel("Classificação")
 
-            fig, ax = plt.subplots()
-            contagem.plot(kind="bar", ax=ax)
-
-            ax.set_xticklabels(labels_pt, rotation=45)
-            ax.set_ylabel("Quantidade")
-
-            st.pyplot(fig)
+        st.pyplot(fig)
 
     with col2:
-        st.subheader("IMC por Classe")
+        st.subheader("IMC por Nível de Obesidade")
 
         fig, ax = plt.subplots()
         sns.boxplot(data=df_plot, x="Obesity_level", y="IMC", order=ordem, ax=ax)
 
         ax.set_xticklabels(labels_pt, rotation=45)
+        ax.set_ylabel("IMC")
+
         st.pyplot(fig)
 
     st.divider()
 
-    # =========================
-    # LINHA 2
-    # =========================
+    # =========================================================
+    # LINHA 2 — DISTRIBUIÇÕES
+    # =========================================================
     col1, col2 = st.columns(2)
 
     with col1:
@@ -382,8 +385,10 @@ elif page == "Dashboard":
 
         fig, ax = plt.subplots()
         df["Age"].hist(bins=20, ax=ax)
+
         ax.set_xlabel("Idade")
         ax.set_ylabel("Quantidade")
+
         st.pyplot(fig)
 
     with col2:
@@ -391,47 +396,71 @@ elif page == "Dashboard":
 
         fig, ax = plt.subplots()
         df["IMC"].hist(bins=20, ax=ax)
+
         ax.set_xlabel("IMC")
+        ax.set_ylabel("Quantidade")
+
         st.pyplot(fig)
 
     st.divider()
 
-    # =========================
-    # 🔥 LINHA 3 (CORRIGIDA)
-    # =========================
+    # =========================================================
+    # LINHA 3 — COMPORTAMENTO (CORRIGIDO ✅)
+    # =========================================================
     col1, col2 = st.columns(2)
 
+    # 🔥 FAF CORRETO
     with col1:
         st.subheader("Atividade Física (FAF)")
 
-        ordem_faf = sorted(df["FAF"].unique())
+        df_plot["FAF"] = df_plot["FAF"].round(0).astype(int)
+
+        faf_counts = df_plot["FAF"].value_counts().sort_index()
 
         fig, ax = plt.subplots()
-        df["FAF"].value_counts().sort_index().plot(kind="bar", ax=ax)
+        faf_counts.plot(kind="bar", ax=ax)
 
-        ax.set_xlabel("Nível de Atividade (0 = baixo | 3 = alto)")
+        ax.set_xticks(range(len(faf_counts)))
+        ax.set_xticklabels([
+            "Muito baixa (0)",
+            "Baixa (1)",
+            "Moderada (2)",
+            "Alta (3)"
+        ])
+
         ax.set_ylabel("Quantidade")
+        ax.set_xlabel("Nível de atividade")
 
         st.pyplot(fig)
 
+    # 🔥 FCVC CORRETO
     with col2:
         st.subheader("Consumo de Vegetais (FCVC)")
 
-        ordem_fcvc = sorted(df["FCVC"].unique())
+        df_plot["FCVC"] = df_plot["FCVC"].round(0).astype(int)
+
+        fcvc_counts = df_plot["FCVC"].value_counts().sort_index()
 
         fig, ax = plt.subplots()
-        df["FCVC"].value_counts().sort_index().plot(kind="bar", ax=ax)
+        fcvc_counts.plot(kind="bar", ax=ax)
 
-        ax.set_xlabel("Frequência (1 = baixo | 3 = alto)")
+        ax.set_xticks(range(len(fcvc_counts)))
+        ax.set_xticklabels([
+            "Baixo (1)",
+            "Médio (2)",
+            "Alto (3)"
+        ])
+
         ax.set_ylabel("Quantidade")
+        ax.set_xlabel("Frequência de consumo")
 
         st.pyplot(fig)
 
     st.divider()
 
-    # =========================
-    # LINHA 4
-    # =========================
+    # =========================================================
+    # LINHA 4 — CORRELAÇÃO
+    # =========================================================
     st.subheader("Correlação entre Variáveis")
 
     fig, ax = plt.subplots()
