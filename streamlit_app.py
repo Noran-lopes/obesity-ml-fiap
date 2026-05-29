@@ -103,14 +103,37 @@ elif page == "📊 Análise dos Dados":
     st.title("📊 Análise Estratégica e Modelagem")
 
     # 1. DISTRIBUIÇÃO
-    st.header("📊 1. Distribuição do Target")
+    st.subheader("📊 Distribuição dos níveis de obesidade")
 
-    fig, ax = plt.subplots()
-    sns.countplot(x="Obesity", data=df, ax=ax)
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+fig, ax = plt.subplots(figsize=(10,5))
 
-    st.info("Distribuição equilibrada → modelo mais robusto")
+# gráfico base
+sns.countplot(x="Obesity", data=df, ax=ax, palette="Blues_r")
+
+# remover eixo Y (count)
+ax.set_ylabel("")
+ax.set_yticks([])
+
+# melhorar visual dos labels
+plt.xticks(rotation=30)
+
+# adicionar valores nas barras
+for p in ax.patches:
+    height = int(p.get_height())
+    ax.annotate(
+        f'{height}',
+        (p.get_x() + p.get_width() / 2., height),
+        ha='center',
+        va='bottom',
+        fontsize=10,
+        fontweight='bold'
+    )
+
+# título mais limpo
+ax.set_title("Distribuição por nível de obesidade", fontsize=14)
+
+st.pyplot(fig)
+
 
     # 2. RELAÇÕES
     st.header("⚖️ 2. Variáveis-chave")
