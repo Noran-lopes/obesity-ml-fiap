@@ -205,136 +205,130 @@ elif page == "Análise + Modelagem":
 
     st.divider()
 
-    # =========================================================
-    # 3️⃣ MODELAGEM
-    # =========================================================
-    st.subheader("3️⃣ Modelagem Preditiva")
+    #
+ =========================================================
+# 3️⃣ MODELAGEM PREDITIVA
+# =========================================================
+st.subheader("3️⃣ Modelagem Preditiva")
 
-    st.markdown("""
-    Modelo utilizado: **Random Forest**
+st.markdown("""
+Modelo utilizado: **Random Forest**
 
-    - Captura relações não lineares  
-    - Alta robustez  
-    - Excelente desempenho em classificação  
-    """)
+- Captura relações não lineares  
+- Alta robustez  
+- Excelente desempenho em classificação  
+""")
 
-    # =========================================================
-    # 🔥 PIPELINE CORRETA
-    # =========================================================
-    df_model = df.copy()
+# =========================================================
+# ✅ PIPELINE CORRETA (IGUAL TREINO)
+# =========================================================
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score
 
-    df_model = df_model.drop(["Weight", "Height"], axis=1)
+df_model = df.copy()
 
-    # encoding completo
-    for col, enc in encoders.items():
-        if col in df_model.columns:
-            df_model[col] = enc.transform(df_model[col])
+# remover variáveis derivadas
+df_model = df_model.drop(["Weight", "Height"], axis=1)
 
-    # separar X e y
-    X = df_model.drop("Obesity_level", axis=1)
-    y = df_model["Obesity_level"]
+# encoding (somente features)
+for col, enc in encoders.items():
+    if col in df_model.columns:
+        df_model[col] = enc.transform(df_model[col])
 
-    # ✅ CORREÇÃO CRÍTICA (evita erro da matriz!)
-    target_encoder = encoders["Obesity_level"]
-    y = target_encoder.transform(y)
+# separar X e y (SEM encoding no target!)
+X = df_model.drop("Obesity_level", axis=1)
+y = df_model["Obesity_level"]
 
-    # split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+# split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-    # =========================================================
-    # ✅ ACURÁCIA
-    # =========================================================
-    y_pred = model.predict(X_test)
+# =========================================================
+# ✅ PREVISÃO
+# =========================================================
+y_pred = model.predict(X_test)
 
-    acc = accuracy_score(y_test, y_pred)
+# garantir mesmo tipo (evita erro)
+y_pred = y_pred.astype(str)
+y_test = y_test.astype(str)
 
-    st.metric("✅ Acurácia do Modelo", f"{round(acc*100,2)}%")
+# =========================================================
+# ✅ ACURÁCIA
+# =========================================================
+acc = accuracy_score(y_test, y_pred)
 
-    # =========================================================
-    # 📊 MATRIZ DE CONFUSÃO
-    # =========================================================
-    st.subheader("📊 Matriz de Confusão")
+st.metric("✅ Acurácia do Modelo", f"{round(acc*100,2)}%")
 
-    cm = confusion_matrix(y_test, y_pred)
+# =========================================================
+# 📊 MATRIZ DE CONFUSÃO
+# =========================================================
+st.subheader("📊 Matriz de Confusão")
 
-    fig, ax = plt.subplots()
+cm = confusion_matrix(y_test, y_pred)
 
-    sns.heatmap(
-        cm,
-        annot=True,
-        fmt="d",
-        cmap="Blues",
-        ax=ax
-    )
+fig, ax = plt.subplots()
 
-    ax.set_xlabel("Previsto")
-    ax.set_ylabel("Real")
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    ax=ax
+)
 
-    st.pyplot(fig)
+ax.set_xlabel("Previsto")
+ax.set_ylabel("Real")
 
-    st.markdown("""
-    - Alta concentração de acertos na diagonal  
-    - Erros entre classes próximas  
-    - Excelente desempenho geral  
+st.pyplot(fig)
 
-    ✅ Modelo confiável para classificação.
-    """)
+# =========================================================
+# 🧠 INTERPRETAÇÃO
+# =========================================================
+st.markdown("""
+### 🧠 Interpretação
 
-    st.divider()
+- A maior concentração de valores está na diagonal → modelo acerta bem  
+- Os erros ocorrem principalmente entre classes próximas  
+- Classes extremas apresentam maior precisão  
 
-    # =========================================================
-    # 📈 FEATURE IMPORTANCE
-    # =========================================================
-    st.subheader("📈 Importância das Variáveis")
+🎯 **Conclusão:**
+O modelo apresenta excelente desempenho e é confiável para classificação de obesidade.
+""")
 
-    importances = pd.DataFrame({
-        "Variável": X.columns,
-        "Importância": model.feature_importances_
-    }).sort_values(by="Importância", ascending=False)
+st.divider()
 
-    fig, ax = plt.subplots()
+# =========================================================
+# 📈 FEATURE IMPORTANCE
+# =========================================================
+st.subheader("📈 Importância das Variáveis")
 
-    sns.barplot(
-        data=importances.head(10),
-        x="Importância",
-        y="Variável",
-        ax=ax
-    )
+importances = pd.DataFrame({
+    "Variável": X.columns,
+    "Importância": model.feature_importances_
+}).sort_values(by="Importância", ascending=False)
 
-    st.pyplot(fig)
+fig, ax = plt.subplots()
 
-    st.markdown("""
-    - IMC é o fator mais relevante  
-    - Variáveis comportamentais impactam fortemente  
-    - Modelo analisa múltiplas dimensões  
+sns.barplot(
+    data=importances.head(10),
+    x="Importância",
+    y="Variável",
+    ax=ax
+)
 
-    ✅ A obesidade é multifatorial.
-    """)
+st.pyplot(fig)
 
-    st.divider()
+st.markdown("""
+### 🧠 Interpretação
 
-    # =========================================================
-    # 💡 PRESCRITIVA
-    # =========================================================
-    st.subheader("4️⃣ Análise Prescritiva")
+- IMC é a variável mais relevante  
+- Hábitos como atividade física e alimentação impactam diretamente  
+- O modelo avalia múltiplos fatores simultaneamente  
 
-    st.markdown("""
-    🔎 Fatores críticos:
-
-    - Baixa atividade física  
-    - Má alimentação  
-    - Alto consumo calórico  
-
-    ✅ Recomendações:
-
-    - Aumentar atividade física  
-    - Melhorar alimentação  
-    - Reduzir calorias  
-
-    🎯 A obesidade pode ser reduzida com mudanças comportamentais.
-    """)
+🎯 **Conclusão:**
+A obesidade é resultado de fatores físicos e comportamentais combinados.
+""")
 
 # =========================================================
 # DASHBOARD EXECUTIVO FINAL
