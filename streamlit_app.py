@@ -240,8 +240,9 @@ elif page == "Análise + Modelagem":
     y = df_model["Obesity_level"]
 
     # ✅ CODIFICAR O TARGET AQUI (ESSENCIAL)
-    if "Obesity_level" in encoders:
+    if y.dtype == "object":
         y = encoders["Obesity_level"].transform(y)
+
 
     # split
     X_train, X_test, y_train, y_test = train_test_split(
