@@ -236,10 +236,7 @@ elif page == "Análise + Modelagem":
     # ✅ SEPARAR X e y (CORRIGIDO)
     # =========================================================
     X = df_model.drop("Obesity_level", axis=1)
-
-    # ✅ FORÇA o target para numérico (igual treino)
-    y = encoders["Obesity_level"].transform(df_model["Obesity_level"])
-
+    y = df_model["Obesity_level"]
     # =========================================================
     # ✅ SPLIT
     # =========================================================
