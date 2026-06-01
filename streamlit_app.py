@@ -248,9 +248,11 @@ elif page == "Análise + Modelagem":
     # ✅ PREVISÃO
     # =========================================================
     y_pred = model.predict(X_test)
+    # alinhar y_test com o modelo (transformar para número)
 
     if "Obesity_level" in encoders:
-        y_pred = encoders["Obesity_level"].inverse_transform(y_pred)
+        y_test = encoders["Obesity_level"].transform(y_test)
+
     
     # =========================================================
     # ✅ ACURÁCIA
