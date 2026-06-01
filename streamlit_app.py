@@ -231,23 +231,23 @@ elif page == "Análise + Modelagem":
     df_model = df_model.drop(["Weight", "Height"], axis=1)
     
     # encoding (somente features)
-    for col, enc in encoders.items():
-        if col in df_model.columns:
-            df_model[col] = enc.transform(df_model[col])
-    
-    # separar X e y (SEM encoding no target!)
+    # encoding (somente features, NÃO target)
+        for col, enc in encoders.items():
+            if col in df_model.columns and col != "Obesity_level":
+                df_model[col] = enc.transform(df_model[col])
+
+    # separar X e y
     X = df_model.drop("Obesity_level", axis=1)
     y = df_model["Obesity_level"]
-    
+
     # split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
-    
-    # =========================================================
-    # ✅ PREVISÃO
-    # =========================================================
+
+    # previsão
     y_pred = model.predict(X_test)
+
     # alinhar y_test com o modelo (transformar para número)
 
     if "Obesity_level" in encoders:
