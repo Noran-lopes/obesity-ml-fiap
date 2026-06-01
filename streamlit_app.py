@@ -231,7 +231,6 @@ elif page == "Análise + Modelagem":
     df_model = df_model.drop(["Weight", "Height"], axis=1)
     
     # encoding (somente features)
-    # encoding (somente features, NÃO target)
     for col, enc in encoders.items():
         if col in df_model.columns and col != "Obesity_level":
             df_model[col] = enc.transform(df_model[col])
@@ -240,6 +239,10 @@ elif page == "Análise + Modelagem":
     X = df_model.drop("Obesity_level", axis=1)
     y = df_model["Obesity_level"]
 
+    # ✅ CODIFICAR O TARGET AQUI (ESSENCIAL)
+    if "Obesity_level" in encoders:
+        y = encoders["Obesity_level"].transform(y)
+
     # split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -247,12 +250,6 @@ elif page == "Análise + Modelagem":
 
     # previsão
     y_pred = model.predict(X_test)
-
-    # alinhar y_test com o modelo (transformar para número)
-
-    if "Obesity_level" in encoders:
-        y_test = encoders["Obesity_level"].transform(y_test)
-
     
     # =========================================================
     # ✅ ACURÁCIA
