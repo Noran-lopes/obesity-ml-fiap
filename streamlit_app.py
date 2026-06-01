@@ -232,9 +232,9 @@ elif page == "Análise + Modelagem":
     
     # encoding (somente features)
     # encoding (somente features, NÃO target)
-        for col, enc in encoders.items():
-            if col in df_model.columns and col != "Obesity_level":
-                df_model[col] = enc.transform(df_model[col])
+    for col, enc in encoders.items():
+        if col in df_model.columns and col != "Obesity_level":
+            df_model[col] = enc.transform(df_model[col])
 
     # separar X e y
     X = df_model.drop("Obesity_level", axis=1)
