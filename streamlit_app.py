@@ -395,7 +395,7 @@ elif page == "Dashboard":
         st.subheader("IMC por Nível de Obesidade")
 
         fig, ax = plt.subplots()
-        sns.boxplot(data=df_plot, x="Obesity_level", y="IMC", order=ordem, ax=ax)
+        sns.boxplot(data=df_plot, x="Obesity", y="IMC", order=ordem, ax=ax)
 
         ax.set_xticklabels(labels_pt, rotation=45)
         ax.set_ylabel("IMC")
