@@ -163,9 +163,9 @@ elif page == "Análise + Modelagem":
 
     df_plot = df.copy()
 
-    if "Obesity_level" in df_plot.columns:
-        df_plot["Obesity_level"] = pd.Categorical(
-            df_plot["Obesity_level"],
+    if "Obesity" in df_plot.columns:
+        df_plot["Obesity"] = pd.Categorical(
+            df_plot["Obesity"],
             categories=ordem,
             ordered=True
         )
@@ -176,7 +176,7 @@ elif page == "Análise + Modelagem":
     st.subheader("1️⃣ Análise Descritiva")
 
     fig, ax = plt.subplots()
-    sns.boxplot(data=df_plot, x="Obesity_level", y="IMC", order=ordem, ax=ax)
+    sns.boxplot(data=df_plot, x="Obesity", y="IMC", order=ordem, ax=ax)
     ax.set_xticklabels(labels_pt, rotation=45)
 
     st.pyplot(fig)
@@ -193,7 +193,7 @@ elif page == "Análise + Modelagem":
     st.subheader("2️⃣ Análise Diagnóstica")
 
     fig, ax = plt.subplots()
-    sns.scatterplot(data=df_plot, x="Age", y="IMC", hue="Obesity_level", ax=ax)
+    sns.scatterplot(data=df_plot, x="Age", y="IMC", hue="Obesity", ax=ax)
 
     st.pyplot(fig)
 
@@ -365,9 +365,9 @@ elif page == "Dashboard":
 
     df_plot = df.copy()
 
-    if "Obesity_level" in df_plot.columns:
-        df_plot["Obesity_level"] = pd.Categorical(
-            df_plot["Obesity_level"],
+    if "Obesity" in df_plot.columns:
+        df_plot["Obesity"] = pd.Categorical(
+            df_plot["Obesity"],
             categories=ordem,
             ordered=True
         )
@@ -380,7 +380,7 @@ elif page == "Dashboard":
     with col1:
         st.subheader("Distribuição dos Níveis de Obesidade")
 
-        contagem = df_plot["Obesity_level"].value_counts().sort_index()
+        contagem = df_plot["Obesity"].value_counts().sort_index()
 
         fig, ax = plt.subplots()
         contagem.plot(kind="bar", ax=ax)
