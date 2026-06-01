@@ -250,7 +250,7 @@ elif page == "Análise + Modelagem":
     y_pred = model.predict(X_test)
 
     if "Obesity_level" in encoders:
-    y_pred = encoders["Obesity_level"].inverse_transform(y_pred)
+        y_pred = encoders["Obesity_level"].inverse_transform(y_pred)
     
     # =========================================================
     # ✅ ACURÁCIA
