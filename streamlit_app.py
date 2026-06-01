@@ -223,31 +223,28 @@ elif page == "Análise + Modelagem":
     from sklearn.metrics import confusion_matrix, accuracy_score
     
     df_model = df.copy()
-    
-    # remover variáveis derivadas
+
+    # feature engineering igual treino
+    df_model["IMC"] = df_model["Weight"] / (df_model["Height"] ** 2)
     df_model = df_model.drop(["Weight", "Height"], axis=1)
-    
-    # encoding (somente features)
+
+    # ✅ encoding completo (features + target)
     for col, enc in encoders.items():
-        if col in df_model.columns and col != "Obesity_level":
+        if col in df_model.columns:
             df_model[col] = enc.transform(df_model[col])
 
-    # =========================================================
-    # ✅ SEPARAR X e y (CORRIGIDO)
-    # =========================================================
-    X = df_model.drop("Obesity_level", axis=1)
-    y = df_model["Obesity_level"]
-    # =========================================================
-    # ✅ SPLIT
-    # =========================================================
+    # ✅ separação correta
+    X = df_model.drop("Obesity", axis=1)
+    y = df_model["Obesity"]
+
+    # split igual treino
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
-    # =========================================================
-    # ✅ PREVISÃO
-    # =========================================================
+    # previsão
     y_pred = model.predict(X_test)
+
     
     # =========================================================
     # ✅ ACURÁCIA
