@@ -222,7 +222,6 @@ elif page == "Análise + Modelagem":
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import confusion_matrix, accuracy_score
     
-    
     df_model = df.copy()
 
     # feature engineering
@@ -232,7 +231,7 @@ elif page == "Análise + Modelagem":
     # encoding
     for col, enc in encoders.items():
         if col in df_model.columns:
-        df_model[col] = enc.transform(df_model[col])
+            df_model[col] = enc.transform(df_model[col])
 
     # separar
     X = df_model.drop("Obesity", axis=1)
