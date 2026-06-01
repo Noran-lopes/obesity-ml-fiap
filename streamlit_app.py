@@ -237,7 +237,7 @@ elif page == "Análise + Modelagem":
 
     # separar X e y
     X = df_model.drop("Obesity_level", axis=1)
-    y = df_model["Obesity_level"]
+    y = encoders["Obesity_level"].transform(df_model["Obesity_level"])
 
     # ✅ CODIFICAR O TARGET AQUI (ESSENCIAL)
     if y.dtype == "object":
