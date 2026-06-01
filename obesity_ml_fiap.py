@@ -14,7 +14,7 @@ df.columns = df.columns.str.strip()
 
 # identificar target
 for col in df.columns:
-    if "obese" in col.lower():
+    if "obesity" in col.lower():
         df.rename(columns={col: "Obesity_level"}, inplace=True)
 
 # =========================
