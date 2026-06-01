@@ -127,9 +127,7 @@ if page == "Exploração":
     Essa base é adequada para construção de modelos que vão além da previsão, permitindo recomendações práticas de melhoria.
     """)
 
-
-
-# =========================================================
+#=========================================================
 # ANÁLISE + MODELAGEM FINAL COMPLETA (SEM ERRO)
 # =========================================================
 
@@ -205,10 +203,9 @@ elif page == "Análise + Modelagem":
 
     st.divider()
 
-    #
-# =========================================================
-# 3️⃣ MODELAGEM PREDITIVA
-# =========================================================
+    # =========================================================
+    # 3️⃣ MODELAGEM PREDITIVA
+    # =========================================================
     st.subheader("3️⃣ Modelagem Preditiva")
     
     st.markdown("""
@@ -235,21 +232,24 @@ elif page == "Análise + Modelagem":
         if col in df_model.columns and col != "Obesity_level":
             df_model[col] = enc.transform(df_model[col])
 
-    # separar X e y
+    # =========================================================
+    # ✅ SEPARAR X e y (CORRIGIDO)
+    # =========================================================
     X = df_model.drop("Obesity_level", axis=1)
+
+    # ✅ FORÇA o target para numérico (igual treino)
     y = encoders["Obesity_level"].transform(df_model["Obesity_level"])
 
-    # ✅ CODIFICAR O TARGET AQUI (ESSENCIAL)
-    if y.dtype == "object":
-        y = encoders["Obesity_level"].transform(y)
-
-
-    # split
+    # =========================================================
+    # ✅ SPLIT
+    # =========================================================
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
-    # previsão
+    # =========================================================
+    # ✅ PREVISÃO
+    # =========================================================
     y_pred = model.predict(X_test)
     
     # =========================================================
@@ -328,8 +328,7 @@ elif page == "Análise + Modelagem":
     🎯 **Conclusão:**
     A obesidade é resultado de fatores físicos e comportamentais combinados.
     """)
-    
-    # =========================================================
+# =========================================================
 # DASHBOARD EXECUTIVO FINAL
 # =========================================================
 
