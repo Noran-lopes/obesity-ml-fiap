@@ -35,6 +35,7 @@ page = st.sidebar.radio(
 @st.cache_data
 def load_data():
     df = pd.read_csv("Obesity.csv")
+    return df
 
     # limpar colunas
     df.columns = df.columns.str.strip()
