@@ -35,13 +35,12 @@ page = st.sidebar.radio(
 @st.cache_data
 def load_data():
     df = pd.read_csv("Obesity.csv")
-
+    
     # limpar colunas
     df.columns = df.columns.str.strip()
 
-    # ✅ CORREÇÃO PRINCIPAL (SEU CASO REAL)
-    if "Obesity" in df.columns:
-        df.rename(columns={"Obesity": "Obesity_level"}, inplace=True)
+    # ✅ manter nome original (ESSENCIAL)
+    # NÃO renomear para Obesity_level
 
     # criar IMC
     df["IMC"] = df["Weight"] / (df["Height"] ** 2)
@@ -49,6 +48,7 @@ def load_data():
     return df
 
 df = load_data()
+
 
 # =========================================================
 # LOAD MODEL
